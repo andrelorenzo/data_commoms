@@ -1,0 +1,6 @@
+cmake_minimum_required(VERSION 3.22)
+project(data_stb_libs)
+SET(CMAKE_C_FLAGS "-Wall -Wextra -pedantic")
+# SET(CMAKE_C_FLAGS "-O3 -xSSE3 -restrict -lpthread -lX11 -ldrm")
+include_directories(${CMAKE_SOURCE_DIR}/include/)
+add_executable(main src/main.c)
