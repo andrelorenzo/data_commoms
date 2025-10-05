@@ -7,9 +7,15 @@
 
 
 
+#ifndef UNUSED_VAR
 #define UNUSED_VAR(a) (void)(a)
+#endif
+#ifndef UNUSED_FN
 #define UNUSED_FN (void)
-#define ARRAY_LEN(arr) sizeof(arr)/sizeof((arr)[0])
+#endif
+#ifndef ARRAY_LEN
+#define ARRAY_LEN(arr) (sizeof(arr)/sizeof((arr)[0]))
+#endif
 
 #define CB_ASSERT(b) assert(b)
 
@@ -42,19 +48,9 @@ void CbDmaWrInc(cb_t * cb, int32_t ndtr);
 
 
 static inline uint8_t CbCheckSize(size_t size){
-    size_t aux = size;
-    uint8_t safe_exit = 0;
-    if(aux == 0){return (uint8_t)0;}
-
-    while((aux % 1) != 1){
-        aux >>= 1;
-        safe_exit++;
-        if(safe_exit > 128){
-            return 0;
-        }
-    }
-    if(aux != 1){return 0;}
-    return 1;
+    if (size == 0) return 0;
+    // size es potencia de 2 si tiene un único bit a 1
+    return (uint8_t)((size & (size - 1)) == 0);
 }
 
 
@@ -64,20 +60,10 @@ static inline uint8_t CbCheckSize(size_t size){
 /// @param name 
 /// @return 
 void CbInit(cb_t* cb, uint8_t * data, size_t size, const char *name){
-    CB_ASSERT(CbCheckSize(size) == 1 || size != 0 || data != NULL);
-    if(name == NULL){name = "";}
-
-    *cb = (cb_t){
-        .data = data,       // reral memory to keep the data
-        .mask = size - 1,   // isntead of % qe use binary arithmetic
-        .name = name,       // can be null
-        .read = 0,          // pointer to the read object
-        .write = 0,         // pointer to the write object
-        .size = size,        // size of the data array
-        .dma_cnt = 0,
-        .full_cnt = 0,
-        .read_last = 0
-    };
+    CB_ASSERT(cb != NULL && data != NULL && size != 0 && CbCheckSize(size));
+    if(!name) name = "";
+    *cb = (cb_t){ .data=data, .size=size, .mask=size-1, .write=0, .read=0,
+                  .name=name, .read_last=0, .dma_cnt=0, .full_cnt=0 };
 }
 
 
@@ -110,17 +96,19 @@ static inline size_t CbEmptyCount(cb_t * cb){
 }
 
 static inline size_t CbContiguousEmptyCount(cb_t * cb){
-    int aux = (int)(cb->write & cb->mask) - (cb->read & cb->mask);
-    if(aux < 0){ // read after write
-        return CbEmptyCount(cb);
-    }else{
-        return cb->size - (cb->write & cb->mask);
+    size_t w = cb->write & cb->mask, r = cb->read & cb->mask;
+    if (w < r) {
+        return (r - w - 1);
+    } else {
+        size_t end = cb->size - w;
+        return (r == 0) ? (end - 1) : end;
     }
 }
 
 static inline void CbWriteInc(cb_t * cb, size_t num){
+    size_t gap = CbEmptyCount(cb);
     cb->write += num;
-    if(num > CbEmptyCount(cb)){
+    if(num > gap){
         cb->read = cb->write + 1;
         cb->read_last = cb->read;
         cb->full_cnt++;
@@ -128,10 +116,10 @@ static inline void CbWriteInc(cb_t * cb, size_t num){
 }
 
 static inline void CbReadInc(cb_t * cb, size_t num){
-    if(num < CbDataCount(cb)){
-        cb->read += num;
-        cb->read_last = cb->read;
-    }
+    size_t avail = (cb->write - cb->read) & cb->mask;
+    if (num > avail) num = avail;
+    cb->read += num;
+    cb->read_last = cb->read;
 }
 
 
@@ -179,11 +167,11 @@ size_t CbRead(cb_t * cb, uint8_t * out, size_t n){
     CB_ASSERT((cb != NULL && out != NULL && n > 0));
 
     if(CbIsEmpty(cb)){return 0;}
-    if(n == 1){
-
+    if (n == 1){
         *out = cb->data[cb->read & cb->mask];
-        return 1;  
-    
+        cb->read++;
+        cb->read_last = cb->read;
+        return 1;
     }else{
         size_t available_bytes = CbDataCount(cb);
         if(available_bytes < n){n = available_bytes;}
@@ -203,25 +191,21 @@ size_t CbRead(cb_t * cb, uint8_t * out, size_t n){
 
 
 size_t CbReadUntil(cb_t * cb, uint8_t * out, size_t max, uint8_t byte){
-    CB_ASSERT((cb != NULL && out != NULL && max > 0));
+    CB_ASSERT(cb && out && max > 0);
+    if (CbIsEmpty(cb)) return 0;
 
-    if(CbIsEmpty(cb)){return 0;}
-    size_t available_bytes = CbDataCount(cb);
-    if(available_bytes < max){max = available_bytes;}
+    size_t avail = (cb->write - cb->read) & cb->mask;
+    if (max > avail) max = avail;
 
-    size_t v_read = cb->read;
-    size_t bytes_rd = 0;
-    while(bytes_rd < max){
-        out[bytes_rd++] = cb->data[v_read & cb->mask];
-        v_read++;
-        if(out[bytes_rd-1] == byte){
-
-        }
+    size_t v = cb->read, i = 0;
+    for (; i < max; ++i, ++v){
+        out[i] = cb->data[v & cb->mask];
+        if (out[i] == byte){ i++; break; }
     }
-
-    CbReadInc(cb, bytes_rd);
-    return bytes_rd;
+    CbReadInc(cb, i);
+    return i;
 }
+
 
 // DMA utils
 
@@ -234,9 +218,15 @@ void CbDmaSynStart(cb_t * cb, uint8_t start_B){
 }
 
 void CbDmaWrInc(cb_t * cb, int32_t ndtr){
-    int32_t bytes_wr = cb->size - ndtr;
-    cb->write += (bytes_wr - cb->dma_cnt) & cb->mask;
-    cb->dma_cnt = bytes_wr;
+    if (ndtr < 0) ndtr = 0;
+    if ((size_t)ndtr > cb->size) ndtr = (int32_t)cb->size;
+
+    size_t produced = (cb->size - (size_t)ndtr) & cb->mask;
+    size_t delta    = (produced - cb->dma_cnt) & cb->mask;
+
+    // Publica delta nuevos bytes; política overwrite centralizada en CbWriteInc
+    cb->dma_cnt = produced;
+    CbWriteInc(cb, delta);
 }
 
 

@@ -1,11 +1,42 @@
 
 #ifndef TIMERS_H_
 #define TIMERS_H_
+#include <stdint.h>
 
-
+#ifndef UNUSED_VAR
 #define UNUSED_VAR(a) (void)(a)
+#endif
+#ifndef UNUSED_FN
 #define UNUSED_FN (void)
-#define ARRAY_LEN(arr) sizeof(arr)/sizeof((arr)[0])
+#endif
+#ifndef ARRAY_LEN
+#define ARRAY_LEN(arr) (sizeof(arr)/sizeof((arr)[0]))
+#endif
+
+#if defined(_WIN32)
+  #include <windows.h>
+  static inline uint64_t now_ms(void){
+      static LARGE_INTEGER f = {0};
+      LARGE_INTEGER c;
+      if(!f.QuadPart){ QueryPerformanceFrequency(&f); }
+      QueryPerformanceCounter(&c);
+      return (uint64_t)( (c.QuadPart * 1000ULL) / f.QuadPart );
+  }
+#elif defined(__unix__) || defined(__APPLE__)
+  #include <time.h>
+  static inline uint64_t now_ms(void){
+      struct timespec ts;
+      clock_gettime(CLOCK_MONOTONIC, &ts);
+      return (uint64_t)ts.tv_sec * 1000ULL + (uint64_t)ts.tv_nsec / 1000000ULL;
+  }
+#else
+  // Fallback genérico (menos preciso)
+  #include <time.h>
+  static inline uint64_t now_ms(void){
+      return (uint64_t)((double)clock() * 1000.0 / (double)CLOCKS_PER_SEC);
+  }
+#endif
+
 
 #include "stdint.h"
 typedef struct{

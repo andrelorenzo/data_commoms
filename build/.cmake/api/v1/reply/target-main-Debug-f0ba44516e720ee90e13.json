@@ -11,6 +11,7 @@
 		"commands" : 
 		[
 			"add_executable",
+			"target_link_options",
 			"include_directories"
 		],
 		"files" : 
@@ -31,6 +32,12 @@
 			{
 				"command" : 1,
 				"file" : 0,
+				"line" : 7,
+				"parent" : 0
+			},
+			{
+				"command" : 2,
+				"file" : 0,
 				"line" : 5,
 				"parent" : 0
 			}
@@ -48,7 +55,7 @@
 			"includes" : 
 			[
 				{
-					"backtrace" : 2,
+					"backtrace" : 3,
 					"path" : "/home/andrelorent/programming/data_common/include"
 				}
 			],
@@ -70,6 +77,11 @@
 			},
 			{
 				"fragment" : "",
+				"role" : "flags"
+			},
+			{
+				"backtrace" : 2,
+				"fragment" : "-lrt",
 				"role" : "flags"
 			}
 		],
