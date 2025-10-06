@@ -5,6 +5,10 @@
 #include "stddef.h"
 #include "assert.h"
 #include "string.h"
+#include "stdio.h"
+#include "stdlib.h"
+#include "limits.h"
+#include "errno.h"
 
 #define FLAG_ASSERT(b) assert(b)    
 
@@ -31,13 +35,17 @@ int         *FlagInt   (const char * name, int       def_val, const char * desc)
 float       *FlagFloat (const char * name, float     def_val, const char * desc);
 double      *FlagDouble(const char * name, double    def_val, const char * desc);
 char        **FlagStr  (const char * name, char *    def_val, const char * desc);
-size_t      *FlagSize  (const char * name, size_t *  def_val, const char * desc);
+size_t      *FlagSize  (const char * name, size_t    def_val, const char * desc);
 flag_list_t *FlagList  (const char * name                   , const char * desc); 
 
 bool        FlagParse(int argc, char ** argv);
-const char *FlagGetProgramName(void);
-void        FlagPrintHelp();
-void        FlagPrintError();
+void        FlagPrintHelp(FILE * stream);
+void        FlagPrintError(FILE * stream);
+
+int         FlagRestArgc(void);
+char **     FlagRestArgv(void);
+const char *FlagProgramName(void);
+char *      FlagName(void *val);
 
 #ifdef PARSER_IMP
 
@@ -111,7 +119,14 @@ typedef struct {
 
 static flag_ctx_t flag_ctx;
 
-
+static char *flag_shift_args(int *argc, char ***argv)
+{
+    assert(*argc > 0);
+    char *result = **argv;
+    *argv += 1;
+    *argc -= 1;
+    return result;
+}
 
 static flag_t * flag_new_flag_(flag_ctx_t * ctx, flag_type_e _type, const char * _name, const char * _desc){
     FLAG_ASSERT(ctx->flags_count < FLAGS_CAP);
@@ -285,5 +300,405 @@ flag_list_t *FlagList  (const char * name, const char * desc){
     return flag_new_list_(&flag_ctx, name, desc);
 }
 ///==================================================================================
+
+
+static void *flag_get_ref(flag_t *flag){
+    return &flag->val;
+}
+
+int FlagRestArgc(void){
+    return flag_ctx.rest_argc;
+}
+char ** FlagRestArgv(void){
+    return flag_ctx.rest_argv;
+}
+const char * FlagProgramName(void){
+    return flag_ctx.program_name;
+}
+
+char *flag_name(flag_ctx_t * ctx, void *val){
+
+    for(size_t i = 0; i < ctx->flags_count; i++){
+        flag_t * f = &ctx->flags[i];
+        if(flag_get_ref(f) == val){
+            return (char*)f->name;
+        }
+    }
+    return NULL;
+}
+
+char * FlagName(void *val){
+    return flag_name(&flag_ctx, val);
+}
+
+
+bool flag_parse(flag_ctx_t * c, int argc, char ** argv){
+    if(c->program_name == NULL){
+        c->program_name = flag_shift_args(&argc, &argv);
+    }
+    while (argc > 0) {
+        char *flag = flag_shift_args(&argc, &argv);
+        if (*flag != '-' || strcmp(flag, "--") == 0) {
+            c->rest_argc = argc + 1;
+            c->rest_argv = argv - 1;
+            return true;
+        }
+
+        flag += 1; // remove the '-'
+        bool ignore = false;
+        if (*flag == '/') {
+            ignore = true;
+            flag += 1;
+        }
+
+        char *equals = strchr(flag, '=');
+        if (equals != NULL) {
+            *equals = '\0';
+            equals += 1; // pointer to the actual value
+        }
+        bool found = false;
+        for (size_t i = 0; i < c->flags_count; ++i) {
+            if (strcmp(c->flags[i].name, flag) == 0) {
+                switch (c->flags[i].type){
+                    case FLAG_BOOL: {
+                        if(!ignore){
+                            c->flags[i].val.as_bool = true;
+                        }
+                    break;
+                    }
+                    case FLAG_UINT8: {
+                        char * arg;
+                        if(equals == NULL){
+                            if(argc == 0){
+                                c->flag_error = FLAG_ERROR_NO_VALUE;
+                                c->flag_error_name = flag;
+                                return false;
+                            }
+                            arg = flag_shift_args(&argc, &argv);
+                        }else{
+                            arg = equals;
+                        }
+                        char * ptr;
+                        static_assert(sizeof(unsigned char) == sizeof(uint8_t), "size mismatch in uint8_t , uint8_t muust be typedef to unsigned char");
+                        unsigned char res = (uint8_t)strtoull(arg,&ptr,10);
+                        if(*ptr != '\0'){
+                            c->flag_error = FLAG_ERROR_INVALID_NUMBER;
+                            c->flag_error_name = flag;
+                            return false;
+                        }
+
+                        if (res == UINT8_MAX && errno == ERANGE) {
+                            c->flag_error = FLAG_ERROR_INTEGER_OVERFLOW;
+                            c->flag_error_name = flag;
+                            return false;
+                        }
+
+                        if (!ignore) {
+                            c->flags[i].val.as_uint8 = res;
+                        }
+                    break;
+                    }
+                    case FLAG_UINT16: {
+                        char * arg;
+                        if(equals == NULL){
+                            if(argc == 0){
+                                c->flag_error = FLAG_ERROR_NO_VALUE;
+                                c->flag_error_name = flag;
+                                return false;
+                            }
+                            arg = flag_shift_args(&argc, &argv);
+                        }else{
+                            arg = equals;
+                        }
+                        char * ptr;
+                        static_assert(sizeof(unsigned short int) == sizeof(uint16_t), "size mismatch in uint16_t , uint16_t muust be typedef to unsigned short int");
+                        unsigned short int res = (uint16_t)strtoull(arg,&ptr,10);
+                        if(*ptr != '\0'){
+                            c->flag_error = FLAG_ERROR_INVALID_NUMBER;
+                            c->flag_error_name = flag;
+                            return false;
+                        }
+
+                        if (res == UINT16_MAX && errno == ERANGE) {
+                            c->flag_error = FLAG_ERROR_INTEGER_OVERFLOW;
+                            c->flag_error_name = flag;
+                            return false;
+                        }
+
+                        if (!ignore) {
+                            c->flags[i].val.as_uint16 = res;
+                        }
+
+                    break;
+                    }
+                    case FLAG_UINT32: {
+                        char * arg;
+                        if(equals == NULL){
+                            if(argc == 0){
+                                c->flag_error = FLAG_ERROR_NO_VALUE;
+                                c->flag_error_name = flag;
+                                return false;
+                            }
+                            arg = flag_shift_args(&argc, &argv);
+                        }else{
+                            arg = equals;
+                        }
+                        char * ptr;
+                        static_assert(sizeof(unsigned int) == sizeof(uint32_t), "size mismatch in uint32_t , uint32_t muust be typedef to unsigned int");
+                        unsigned short int res = (uint32_t)strtoull(arg,&ptr,10);
+                        if(*ptr != '\0'){
+                            c->flag_error = FLAG_ERROR_INVALID_NUMBER;
+                            c->flag_error_name = flag;
+                            return false;
+                        }
+
+                        if (res == UINT32_MAX && errno == ERANGE) {
+                            c->flag_error = FLAG_ERROR_INTEGER_OVERFLOW;
+                            c->flag_error_name = flag;
+                            return false;
+                        }
+
+                        if (!ignore) {
+                            c->flags[i].val.as_uint32 = res;
+                        }
+
+                    break;
+                    }
+                    case FLAG_UINT64: {
+                        char * arg;
+                        if(equals == NULL){
+                            if(argc == 0){
+                                c->flag_error = FLAG_ERROR_NO_VALUE;
+                                c->flag_error_name = flag;
+                                return false;
+                            }
+                            arg = flag_shift_args(&argc, &argv);
+                        }else{
+                            arg = equals;
+                        }
+                        char * ptr;
+                        static_assert(sizeof(unsigned long int) == sizeof(uint64_t), "size mismatch in uint64_t , uint64_t muust be typedef to unsigned long int");
+                        unsigned short int res = (uint64_t)strtoull(arg,&ptr,10);
+                        if(*ptr != '\0'){
+                            c->flag_error = FLAG_ERROR_INVALID_NUMBER;
+                            c->flag_error_name = flag;
+                            return false;
+                        }
+
+                        if (res == UINT64_MAX && errno == ERANGE) {
+                            c->flag_error = FLAG_ERROR_INTEGER_OVERFLOW;
+                            c->flag_error_name = flag;
+                            return false;
+                        }
+
+                        if (!ignore) {
+                            c->flags[i].val.as_uint64 = res;
+                        }
+
+                    break;
+                    }
+                    case FLAG_INT: {
+
+                    break;
+                    }
+                    case FLAG_FLOAT: {
+
+                    break;
+                    }
+                    case FLAG_DOUBLE: {
+
+                    break;
+                    }
+                    case FLAG_SIZE: {
+
+                    break;
+                    }
+                    case FLAG_STR: {
+
+                    break;
+                    }
+                    case FLAG_LIST: {
+
+                    break;
+                    }
+                }
+            }
+        }
+
+
+    } 
+}
+
+bool FlagParse(int argc, char ** argv){
+    return flag_parse(&flag_ctx, argc, argv);
+}
+
+void FlagPrintHelp(FILE *stream){
+
+    static const char * def_usage =     "Usage: %s [FLAGS]\n"
+                                        "\n"
+                                        "OPTIONS:\n"
+                                        "\n"
+                                        "    DEFAULT FLAGS:\n"
+                                        "    -f, -file <str>\n"
+                                        "        File name to be parsed\n"
+                                        "        Default: NONE\n"
+                                        "    -h, -help <bool>\n"
+                                        "        Show this message\n"
+                                        "        Default: false\n"
+                                        "    CUSTOM FLAGS:\n";
+
+    fprintf(stream, def_usage, flag_ctx.program_name);
+
+    for(size_t i = 0; i < flag_ctx.flags_count; i++){
+        flag_t * f = &flag_ctx.flags[i]; 
+        switch(flag_ctx.flags[i].type){
+            case FLAG_UINT8 : {
+                fprintf(stream,"    -%s <uint8>\n", f->name);
+                fprintf(stream,"        %s\n", f->desc);
+                if(f->def.as_uint8){
+                    fprintf(stream,"        Default: %u\n", f->def.as_uint8);
+                }else{
+                    fprintf(stream, "MANDATORY");
+                }
+            break; 
+            }  
+            case FLAG_UINT16 : {
+                fprintf(stream,"    -%s <uint16>\n", f->name);
+                fprintf(stream,"        %s\n", f->desc);
+                if(f->def.as_uint16){
+                    fprintf(stream,"        Default: %u\n", f->def.as_uint16);
+                }else{
+                    fprintf(stream, "MANDATORY");
+                }
+            break;    
+            }  
+            case FLAG_UINT32 : {
+                fprintf(stream,"    -%s <uint32>\n", f->name);
+                fprintf(stream,"        %s\n", f->desc);
+                if(f->def.as_uint32){
+                    fprintf(stream,"        Default: %lu\n", f->def.as_uint32);
+                }else{
+                    fprintf(stream, "MANDATORY");
+                }
+            break;    
+            }  
+            case FLAG_UINT64 : {
+                fprintf(stream,"    -%s <uint64>\n", f->name);
+                fprintf(stream,"        %s\n", f->desc);
+                if(f->def.as_uint64){
+                    fprintf(stream,"        Default: %lu\n", f->def.as_uint64);
+                }else{
+                    fprintf(stream, "MANDATORY");
+                }
+            break;    
+            }  
+            case FLAG_INT : {
+                fprintf(stream,"    -%s <int>\n", f->name);
+                fprintf(stream,"        %s\n", f->desc);
+                if(f->def.as_int){
+                    fprintf(stream,"        Default: %i\n", f->def.as_int);
+                }else{
+                    fprintf(stream, "MANDATORY");
+                }
+            break;   
+            }  
+            case FLAG_FLOAT : {
+                fprintf(stream,"    -%s <float>\n", f->name);
+                fprintf(stream,"        %s\n", f->desc);
+                if(f->def.as_float){
+                    fprintf(stream,"        Default: %.4f\n", f->def.as_float);
+                }else{
+                    fprintf(stream, "MANDATORY");
+                }
+            break; 
+            }  
+            case FLAG_DOUBLE : {
+                fprintf(stream,"    -%s <double>\n", f->name);
+                fprintf(stream,"        %s\n", f->desc);
+                if(f->def.as_double){
+                    fprintf(stream,"        Default: %.8f\n", f->def.as_double);
+                }else{
+                    fprintf(stream, "MANDATORY");
+                }
+            break;    
+            }  
+            case FLAG_SIZE : {
+                fprintf(stream,"    -%s <size>\n", f->name);
+                fprintf(stream,"        %s\n", f->desc);
+                if(f->def.as_size){
+                    fprintf(stream,"        Default: %u\n", f->def.as_size);
+                }else{
+                    fprintf(stream, "MANDATORY");
+                }
+            break;  
+            }  
+            case FLAG_STR : {
+                fprintf(stream,"    -%s <str>\n", f->name);
+                fprintf(stream,"        %s\n", f->desc);
+                if(f->def.as_str){
+                    fprintf(stream,"        Default: %s\n", f->def.as_str);
+                }else{
+                    fprintf(stream, "MANDATORY");
+                }
+            break;   
+            }  
+            case FLAG_LIST : {
+                fprintf(stream,"    -%s <str> ... %s <str> ...\n", f->name, f->name);
+                fprintf(stream,"        %s\n", f->desc);
+            break;  
+            }  
+            default:
+                assert(0 && "unreachable");
+                exit(-1);
+            break;
+        }
+    }
+
+
+}
+void FlagPrintError(FILE * stream){
+    flag_ctx_t * fc = &flag_ctx;
+    switch(fc->flag_error){
+        case FLAG_NO_ERROR : {
+            fprintf(stream,"Task failed succesfully, No error :/\n");
+        break;
+        }
+        case FLAG_ERROR_UNKNOWN : {
+            fprintf(stream,"ERROR: -%s: unknown flag\n", fc->flag_error_name);
+            fprintf(stream,"    %s is not a valid flag\n", fc->flag_error_value);
+        break;
+        }
+        case FLAG_ERROR_NO_VALUE : {
+            fprintf(stream,"ERROR: -%s: no value provided\n", fc->flag_error_name);
+        break;
+        }
+        case FLAG_ERROR_INVALID_NUMBER : {
+            fprintf(stream,"ERROR: -%s: invalid number\n", fc->flag_error_name);
+        break;
+        }
+        case FLAG_ERROR_INTEGER_OVERFLOW : {
+            fprintf(stream,"ERROR: -%s: integer overflow\n", fc->flag_error_name);
+        break;
+        }
+        case FLAG_ERROR_FLOAT_OVERFLOW : {
+            fprintf(stream,"ERROR: -%s: float overflow\n", fc->flag_error_name);
+        break;
+        }
+        case FLAG_ERROR_DOUBLE_OVERFLOW : {
+            fprintf(stream,"ERROR: -%s: double overflow\n", fc->flag_error_name);
+        break;
+        }
+        case FLAG_ERROR_INVALID_SIZE_SUFFIX : {
+            fprintf(stream, "ERROR: -%s: invalid size suffix\n", fc->flag_error_name);
+            fprintf(stream, "    Got %s suffix which is not expected\n", fc->flag_error_value);
+        break;
+        }
+        default:
+            assert(0 && "unreachable");
+            exit(-1);
+        break;
+    } 
+}
 
 #endif // PARSER_H_
