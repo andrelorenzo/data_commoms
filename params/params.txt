@@ -1,18 +1,17 @@
 
-INT:PARAM1 = 3
+PINT = 3
 
 
-FLOAT:PARMS2 = 5 
-FLOAT:PARM3 = 6.89 # THIS IS A COMMENT
+PFLOAT = 5 
+PFLOAT2 = 6.89 # THIS IS A COMMENT
 
-LIST:PARMS5 = [1 2 3 4 5] # or [1,2,3,4,5]
+PLIST = [1 2 3 4 5] # or [1,2,3,4,5]
 
 # THIS IS A COMMENT
-UINT:PARMS89 = 89
+PUINT = 89
 
-STR:PARM2342 = "HOLA" # or ADIOS
+PSTR = "HOLA" # or ADIOS
 
-BOOL:FLAG = 1 # 1, 0, true, false, yes, no
+PBOOL = 1 # 1, 0, true, false, yes, no
 
-
-# CUSTOM_STRUCT:NAME = 0xFF...
+PSTRUCT = 010002000300

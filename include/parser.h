@@ -11,17 +11,21 @@
 #include "errno.h"
 #include <ctype.h>
 
+#ifndef FLAG_ASSERT
 #define FLAG_ASSERT(b) assert(b)    
+#endif // FLAG_ASSERT
 
 #ifndef UNUSED_VAR
 #define UNUSED_VAR(a) (void)(a)
-#endif
+#endif // UNUSED_VAR
+
 #ifndef UNUSED_FN
 #define UNUSED_FN (void)
-#endif
+#endif // UNUSED_FN
+
 #ifndef ARRAY_LEN
 #define ARRAY_LEN(arr) (sizeof(arr)/sizeof((arr)[0]))
-#endif
+#endif // ARRAY_LEN
 
 #ifndef FLAGS_CAP
 #define FLAGS_CAP 256
@@ -35,6 +39,9 @@ typedef struct {
     const char *items[FLAG_LIST_INIT_CAP];
     size_t count;
 } flag_list_t;
+
+
+/* ARGUMENT BASED PARSER*/
 
 bool        *FlagBool  (const char * name,bool is_mandatory, bool def_val     , const char * desc);
 uint8_t     *FlagUint8 (const char * name,bool is_mandatory, uint8_t   def_val, const char * desc);
@@ -58,10 +65,6 @@ const char *FlagProgramName(void);
 char *      FlagName(void *val);
 
 #ifdef PARSER_IMP
-
-
-#endif // PARSER_IMP
-
 
 typedef enum {
     FLAG_BOOL = 0,
@@ -111,6 +114,7 @@ typedef struct {
     flag_val_u val;
     flag_val_u def;
     bool is_mandatory;
+    bool has_changed;
 } flag_t;
 
 typedef struct {
@@ -133,8 +137,13 @@ static flag_ctx_t flag_ctx;
 
 void context_reset(){
     flag_ctx.flags_count = 0;
-    flag_ctx.program_name = NULL;
     flag_ctx.rest_argc = 0;
+    flag_ctx.program_name = NULL;
+    
+    for(size_t i = 0; i < FLAGS_CAP; i++){
+        flag_ctx.flags[i].has_changed = false;
+        flag_ctx.flags[i].is_mandatory = false;
+    }
 }
 
 static void flag_list_append(flag_t * f, char * item){
@@ -168,13 +177,10 @@ static flag_t * flag_new_flag_(flag_ctx_t * ctx, flag_type_e _type, const char *
 ///=======================================BOOL=======================================   
 static bool * flag_new_bool_(flag_ctx_t * ctx, const char * _name, bool _def, bool is_mandatory, const char * _desc){
     flag_t * f = flag_new_flag_(ctx, FLAG_BOOL, _name, _desc, is_mandatory);
-    if(is_mandatory){
-        return NULL;
-    }else{
-        f->def.as_bool = _def;
-        f->val.as_bool = _def;    
-        return &f->val.as_bool;
-    }
+    
+    f->def.as_bool = _def;
+    f->val.as_bool = _def;    
+    return &f->val.as_bool;
 }
 
 bool *FlagBool  (const char * name,bool is_mandatory, bool def_val, const char * desc){
@@ -185,13 +191,10 @@ bool *FlagBool  (const char * name,bool is_mandatory, bool def_val, const char *
 ///=======================================UINT8=======================================   
 static uint8_t * flag_new_uint8_(flag_ctx_t * ctx, const char * _name, uint8_t _def, bool is_mandatory, const char * _desc){
     flag_t * f = flag_new_flag_(ctx, FLAG_UINT8, _name, _desc, is_mandatory);
-    if(is_mandatory){
-        return NULL;
-    }else{
-        f->def.as_uint8 = _def;
-        f->val.as_uint8 = _def;    
-        return &f->val.as_uint8;
-    }
+    
+    f->def.as_uint8 = _def;
+    f->val.as_uint8 = _def;    
+    return &f->val.as_uint8;
 }
 
 uint8_t *FlagUint8  (const char * name,bool is_mandatory, uint8_t def_val, const char * desc){
@@ -202,13 +205,10 @@ uint8_t *FlagUint8  (const char * name,bool is_mandatory, uint8_t def_val, const
 ///=======================================UINT16=======================================   
 static uint16_t * flag_new_uint16_(flag_ctx_t * ctx, const char * _name, uint16_t _def, bool is_mandatory, const char * _desc){
     flag_t * f = flag_new_flag_(ctx, FLAG_UINT16, _name, _desc, is_mandatory);
-    if(is_mandatory){
-        return NULL;
-    }else{
-        f->def.as_uint16 = _def;
-        f->val.as_uint16 = _def;    
-        return &f->val.as_uint16;
-    }
+    
+    f->def.as_uint16 = _def;
+    f->val.as_uint16 = _def;    
+    return &f->val.as_uint16;
 }
 
 uint16_t *FlagUint16  (const char * name, bool is_mandatory, uint16_t def_val, const char * desc){
@@ -219,13 +219,10 @@ uint16_t *FlagUint16  (const char * name, bool is_mandatory, uint16_t def_val, c
 ///=======================================UINT32=======================================   
 static uint32_t * flag_new_uint32_(flag_ctx_t * ctx, const char * _name, uint32_t _def, bool is_mandatory, const char * _desc){
     flag_t * f = flag_new_flag_(ctx, FLAG_UINT32, _name, _desc, is_mandatory);
-    if(is_mandatory){
-        return NULL;
-    }else{
-        f->def.as_uint32 = _def;
-        f->val.as_uint32 = _def;    
-        return &f->val.as_uint32;
-    }
+    
+    f->def.as_uint32 = _def;
+    f->val.as_uint32 = _def;    
+    return &f->val.as_uint32;
 }
 
 uint32_t *FlagUint32  (const char * name,bool is_mandatory, uint32_t def_val, const char * desc){
@@ -236,13 +233,10 @@ uint32_t *FlagUint32  (const char * name,bool is_mandatory, uint32_t def_val, co
 ///=======================================UINT64=======================================   
 static uint64_t * flag_new_uint64_(flag_ctx_t * ctx, const char * _name, uint64_t _def, bool is_mandatory, const char * _desc){
     flag_t * f = flag_new_flag_(ctx, FLAG_UINT64, _name, _desc, is_mandatory);
-    if(is_mandatory){
-        return NULL;
-    }else{
-        f->def.as_uint64 = _def;
-        f->val.as_uint64 = _def;    
-        return &f->val.as_uint64;
-    }
+    
+    f->def.as_uint64 = _def;
+    f->val.as_uint64 = _def;    
+    return &f->val.as_uint64;
 }
 
 uint64_t *FlagUint64  (const char * name,bool is_mandatory, uint64_t def_val, const char * desc){
@@ -253,13 +247,10 @@ uint64_t *FlagUint64  (const char * name,bool is_mandatory, uint64_t def_val, co
 ///=======================================INT=======================================   
 static int * flag_new_int_(flag_ctx_t * ctx, const char * _name, int _def, bool is_mandatory, const char * _desc){
     flag_t * f = flag_new_flag_(ctx, FLAG_INT, _name, _desc, is_mandatory);
-    if(is_mandatory){
-        return NULL;
-    }else{
-        f->def.as_int = _def;
-        f->val.as_int = _def;
-        return &f->val.as_int;
-    }
+    
+    f->def.as_int = _def;
+    f->val.as_int = _def;
+    return &f->val.as_int;
 }
 
 int *FlagInt  (const char * name,bool is_mandatory, int def_val, const char * desc){
@@ -270,13 +261,10 @@ int *FlagInt  (const char * name,bool is_mandatory, int def_val, const char * de
 ///=======================================FLOAT=======================================   
 static float * flag_new_float_(flag_ctx_t * ctx, const char * _name, float _def, bool is_mandatory, const char * _desc){
     flag_t * f = flag_new_flag_(ctx, FLAG_FLOAT, _name, _desc, is_mandatory);
-    if(is_mandatory){
-        return NULL;
-    }else{
-        f->def.as_float = _def;
-        f->val.as_float = _def;    
-        return &f->val.as_float;
-    }
+    
+    f->def.as_float = _def;
+    f->val.as_float = _def;    
+    return &f->val.as_float;
 }
 
 float *FlagFloat  (const char * name,bool is_mandatory, float def_val, const char * desc){
@@ -287,13 +275,10 @@ float *FlagFloat  (const char * name,bool is_mandatory, float def_val, const cha
 ///=======================================DOUBLE=======================================   
 static double * flag_new_double_(flag_ctx_t * ctx, const char * _name, double _def, bool is_mandatory, const char * _desc){
     flag_t * f = flag_new_flag_(ctx, FLAG_DOUBLE, _name, _desc, is_mandatory);
-    if(is_mandatory){
-        return NULL;
-    }else{
-        f->def.as_double = _def;
-        f->val.as_double = _def;    
-        return &f->val.as_double;
-    }
+    
+    f->def.as_double = _def;
+    f->val.as_double = _def;    
+    return &f->val.as_double;
 }
 
 double *FlagDouble  (const char * name,bool is_mandatory, double def_val, const char * desc){
@@ -304,13 +289,10 @@ double *FlagDouble  (const char * name,bool is_mandatory, double def_val, const 
 ///=======================================SIZE=======================================   
 static size_t * flag_new_size_(flag_ctx_t * ctx, const char * _name, size_t _def, bool is_mandatory, const char * _desc){
     flag_t * f = flag_new_flag_(ctx, FLAG_SIZE, _name, _desc, is_mandatory);
-    if(is_mandatory){
-        return NULL;
-    }else{
-        f->def.as_size = _def;
-        f->val.as_size = _def;    
-        return &f->val.as_size;
-    }
+    
+    f->def.as_size = _def;
+    f->val.as_size = _def;    
+    return &f->val.as_size;
 }
 
 size_t *FlagSize  (const char * name,bool is_mandatory, size_t def_val, const char * desc){
@@ -321,13 +303,10 @@ size_t *FlagSize  (const char * name,bool is_mandatory, size_t def_val, const ch
 ///=======================================string=======================================   
 static char ** flag_new_string_(flag_ctx_t * ctx, const char * _name, char * _def, bool is_mandatory , const char * _desc){
     flag_t * f = flag_new_flag_(ctx, FLAG_STR, _name, _desc, is_mandatory);
-    if(is_mandatory){
-        return NULL;
-    }else{
-        f->def.as_str = _def;
-        f->val.as_str = _def;
-        return &f->val.as_str;
-    }
+    
+    f->def.as_str = _def;
+    f->val.as_str = _def;
+    return &f->val.as_str;
 }
 
 char **FlagStr  (const char * name,bool is_mandatory, char * def_val, const char * desc){
@@ -378,9 +357,12 @@ char * FlagName(void *val){
 
 
 bool flag_parse(flag_ctx_t * c, int argc, char ** argv){
+    // context_reset();
+
     if(c->program_name == NULL){
         c->program_name = flag_shift_args(&argc, &argv);
     }
+    bool mandatory_failed = false;
     while (argc > 0) {
         char *flag = flag_shift_args(&argc, &argv);
         if (*flag != '-' || strcmp(flag, "--") == 0) {
@@ -397,7 +379,7 @@ bool flag_parse(flag_ctx_t * c, int argc, char ** argv){
             flag += 1;
         }
 
-        char *equals = strchr(flag, '=');
+        char * equals = strchr(flag, '=');
         if (equals != NULL) {
             *equals = '\0';
             equals += 1; // pointer to the actual value
@@ -440,6 +422,7 @@ bool flag_parse(flag_ctx_t * c, int argc, char ** argv){
                                 return false;
                             }
                         }
+                        c->flags[i].has_changed = true;
                     break;
                     }
                     case FLAG_UINT8: {
@@ -471,6 +454,7 @@ bool flag_parse(flag_ctx_t * c, int argc, char ** argv){
                         if (!ignore) {
                             c->flags[i].val.as_uint8 = (uint8_t)tmp;
                         }
+                        c->flags[i].has_changed = true;
                     break;
                     }
                     case FLAG_UINT16: {
@@ -502,7 +486,7 @@ bool flag_parse(flag_ctx_t * c, int argc, char ** argv){
                         if (!ignore) {
                             c->flags[i].val.as_uint16 = (uint16_t)tmp;
                         }
-
+                        c->flags[i].has_changed = true;
                     break;
                     }
                     case FLAG_UINT32: {
@@ -534,7 +518,7 @@ bool flag_parse(flag_ctx_t * c, int argc, char ** argv){
                         if (!ignore) {
                             c->flags[i].val.as_uint32 = (uint32_t)tmp;
                         }
-
+                        c->flags[i].has_changed = true;
                     break;
                     }
                     case FLAG_UINT64: {
@@ -568,7 +552,7 @@ bool flag_parse(flag_ctx_t * c, int argc, char ** argv){
                         if (!ignore) {
                             c->flags[i].val.as_uint64 = (uint64_t)tmp;
                         }
-
+                        c->flags[i].has_changed = true;
                     break;
                     }
                     case FLAG_INT: {
@@ -604,6 +588,7 @@ bool flag_parse(flag_ctx_t * c, int argc, char ** argv){
                         if(!ignore){
                             c->flags[i].val.as_int = (int)v;
                         }
+                        c->flags[i].has_changed = true;
                     break;
                     }
                     case FLAG_FLOAT: {
@@ -621,7 +606,7 @@ bool flag_parse(flag_ctx_t * c, int argc, char ** argv){
                         errno = 0;
                         char * ptr;
                         float f = strtof(arg, &ptr);
-                        if(*ptr != '\0'){
+                        if(*ptr != '\0' && *ptr != '\0'){
                             c->flag_error = FLAG_ERROR_INVALID_NUMBER;
                             c->flag_error_name = flag;
                             return false;
@@ -634,6 +619,7 @@ bool flag_parse(flag_ctx_t * c, int argc, char ** argv){
                         if (!ignore) {
                             c->flags[i].val.as_float = f;
                         }
+                        c->flags[i].has_changed = true;
                     break;
                     }
                     case FLAG_DOUBLE: {
@@ -664,6 +650,7 @@ bool flag_parse(flag_ctx_t * c, int argc, char ** argv){
                         if (!ignore) {
                             c->flags[i].val.as_double = d;
                         }
+                        c->flags[i].has_changed = true;
                     break;
                     }
                     case FLAG_SIZE: {
@@ -722,6 +709,7 @@ bool flag_parse(flag_ctx_t * c, int argc, char ** argv){
                         if (!ignore) {
                             c->flags[i].val.as_size = (size_t)( (unsigned long long)(base * mult) );
                         }
+                        c->flags[i].has_changed = true;
                     break;
                     }
                     case FLAG_STR: {
@@ -739,6 +727,7 @@ bool flag_parse(flag_ctx_t * c, int argc, char ** argv){
                         if (!ignore) {
                             c->flags[i].val.as_str = arg; // guarda el puntero; copia si necesitas propiedad
                         }
+                        c->flags[i].has_changed = true;
                     break;
                     }
                     case FLAG_LIST: {
@@ -759,6 +748,7 @@ bool flag_parse(flag_ctx_t * c, int argc, char ** argv){
                             // Fallback: si no hay contenedor de lista, al menos guarda el último valor como cadena.
                             flag_list_append(&c->flags[i], arg);
                         }
+                        c->flags[i].has_changed = true;
                     break;
                     }
                     case COUNT_FLAG_TYPES:
@@ -778,6 +768,18 @@ bool flag_parse(flag_ctx_t * c, int argc, char ** argv){
             return false;
         }
     } 
+    for (size_t i = 0; i < c->flags_count; ++i) {
+        if(c->flags[i].is_mandatory && !c->flags[i].has_changed){
+            c->flag_error = FLAG_ERROR_NO_VALUE;
+            c->flag_error_name = (char*)c->flags[i].name;
+            FlagPrintError(stdout);
+            mandatory_failed = true;
+        }
+    }
+    if(mandatory_failed){
+        // FlagPrintHelp(stdout);
+        return false;
+    }
     c->rest_argc = argc;
     c->rest_argv = argv;
     return true;
@@ -964,5 +966,6 @@ void FlagPrintError(FILE * stream){
         break;
     } 
 }
+#endif // PARSER_IMP
 
 #endif // PARSER_H_

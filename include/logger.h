@@ -61,7 +61,6 @@ LOGGER_WEAK void printOut(const char * msg, size_t size){
     // (ESP32)              uart_write_bytes(uart_num, (const char*)msg, size);
     // (ARDUINO)            Serial.println(msg);
 }
-// max_verb es debug solo quiero que se impriman warn error y fatal
  
 /// @brief Actual logging function
 /// @param verbosity verbosity of the message, never set it to NONE

@@ -1,9 +1,9 @@
 [
 {
   "directory": "/home/andrelorent/programming/data_common/build",
-  "command": "/usr/bin/gcc  -I/home/andrelorent/programming/data_common/include -Wall -Wextra -pedantic -g -o CMakeFiles/main.dir/src/main.c.o -c /home/andrelorent/programming/data_common/src/main.c",
-  "file": "/home/andrelorent/programming/data_common/src/main.c",
-  "output": "CMakeFiles/main.dir/src/main.c.o"
+  "command": "/usr/bin/gcc  -I/home/andrelorent/programming/data_common/include -Wall -Wextra -pedantic -g -o CMakeFiles/main.dir/src/file_main.c.o -c /home/andrelorent/programming/data_common/src/file_main.c",
+  "file": "/home/andrelorent/programming/data_common/src/file_main.c",
+  "output": "CMakeFiles/main.dir/src/file_main.c.o"
 },
 {
   "directory": "/home/andrelorent/programming/data_common/build/tests",

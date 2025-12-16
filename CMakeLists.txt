@@ -14,4 +14,4 @@ if (UNIT_TESTING)
      add_subdirectory(tests)
 endif()
 
-add_executable(main src/main.c)
+add_executable(main src/file_main.c)

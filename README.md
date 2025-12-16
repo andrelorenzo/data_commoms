@@ -2,11 +2,6 @@
 
 fn creeate flag
 
-if mandatory
-    &val = NULL;
-else
-    def = def
-    val = def
 
 
 fn parse flag
