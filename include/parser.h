@@ -41,8 +41,6 @@ typedef struct {
 } flag_list_t;
 
 
-/* ARGUMENT BASED PARSER*/
-
 bool        *FlagBool  (const char * name,bool is_mandatory, bool def_val     , const char * desc);
 uint8_t     *FlagUint8 (const char * name,bool is_mandatory, uint8_t   def_val, const char * desc);
 uint16_t    *FlagUint16(const char * name,bool is_mandatory, uint16_t  def_val, const char * desc);
@@ -56,6 +54,9 @@ size_t      *FlagSize  (const char * name,bool is_mandatory, size_t    def_val, 
 flag_list_t *FlagList  (const char * name,bool is_mandatory                   , const char * desc); 
 
 bool        FlagParse(int argc, char ** argv);
+
+
+
 void        FlagPrintHelp(FILE * stream);
 void        FlagPrintError(FILE * stream);
 

@@ -10,8 +10,8 @@ PLIST = [1 2 3 4 5] # or [1,2,3,4,5]
 # THIS IS A COMMENT
 PUINT = 89
 
-PSTR = "HOLA" # or ADIOS
+PSTR = "ADIOS" # or ADIOS
 
-PBOOL = 1 # 1, 0, true, false, yes, no
+PBOOL = no # 1, 0, true, false, yes, no
 
-PSTRUCT = 010002000300
+PSTRUCT = 0x010002000300

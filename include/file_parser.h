@@ -69,20 +69,21 @@ typedef enum{
 
 /* ARGUMENT BASED PARSER*/
 
-bool        *ParamBool  (const char * name,bool is_mandatory, bool def_val     , const char * desc);
-uint32_t    *ParamUint(const char * name,bool is_mandatory, uint32_t  def_val, const char * desc);
-int         *ParamInt   (const char * name,bool is_mandatory, int       def_val, const char * desc);
-float       *ParamFloat (const char * name,bool is_mandatory, float     def_val, const char * desc);
-char        **ParamStr  (const char * name,bool is_mandatory, char *    def_val, const char * desc);
-param_list_t *ParamList  (const char * name, const char * desc, param_type_e type); 
-uint8_t      *ParamBin  (const char * name, const char * desc, uint8_t def_val); 
-bool        InitCSV  (const char * dec_sep, const char * col_sep); 
-int         GetCSVData(const char * name, float * data, size_t data_len);
+void ParamBool  (bool * var, const char * name,bool is_mandatory, bool def_val     , const char * desc);
+void ParamUint  (uint32_t * var, const char * name,bool is_mandatory, uint32_t  def_val, const char * desc);
+void ParamInt   (int * var, const char * name,bool is_mandatory, int       def_val, const char * desc);
+void ParamFloat (float * var, const char * name,bool is_mandatory, float     def_val, const char * desc);
+void ParamStr   (char ** var, const char * name,bool is_mandatory, char *    def_val, const char * desc);
+void ParamList  (param_list_t * var, const char * name, const char * desc, param_type_e type); 
+void ParamBin   (uint8_t * var, size_t len, const char * name, const char * desc, uint8_t def_val);
+
+bool InitCSV    (const char * dec_sep, const char * col_sep); 
+int  GetCSVData (const char * name, float * data, size_t data_len);
 
 
-bool        ParamParse(const char * filename, file_type_e type);
-void        ParamPrintError(FILE * stream);
-char *      ParamName(void *val);
+bool  ParamParse(const char * filename, file_type_e type);
+void  ParamPrintError(FILE * stream);
+char *ParamName(void *val);
 
 #ifdef PARSER_IMP
 
@@ -107,10 +108,14 @@ typedef enum {
 
 typedef struct {
     param_type_e type;
+    param_type_e list_type;
+    size_t list_bin_len;
     const char *name;
     const char *desc;
-    param_val_u val;
+    void * ref;
     param_val_u def;
+
+
     bool is_mandatory;
     bool has_changed;
 } param_t;
@@ -163,102 +168,105 @@ static param_t * param_new_param_(param_ctx_t * ctx, param_type_e _type, const c
 }
 
 ///=======================================BOOL=======================================   
-static bool * param_new_bool_(param_ctx_t * ctx, const char * _name, bool _def, bool is_mandatory, const char * _desc){
+static void param_new_bool_(param_ctx_t * ctx, bool * var, const char * _name, bool _def, bool is_mandatory, const char * _desc){
     param_t * f = param_new_param_(ctx, PARAM_BOOL, _name, _desc, is_mandatory);
     
     f->def.simple_val.as_bool = _def;
-    f->val.simple_val.as_bool = _def;    
-    return &f->val.simple_val.as_bool;
+    f->ref = var;    
+    *var = _def;
 }
 
-bool *ParamBool  (const char * name,bool is_mandatory, bool def_val, const char * desc){
-    return param_new_bool_(&param_ctx, name, def_val, is_mandatory, desc);
+void ParamBool  (bool * var, const char * name,bool is_mandatory, bool def_val, const char * desc){
+    param_new_bool_(&param_ctx,var, name, def_val, is_mandatory, desc);
 }
 ///==================================================================================
 
 ///=======================================UINT32=======================================   
-static uint32_t * param_new_uint32_(param_ctx_t * ctx, const char * _name, uint32_t _def, bool is_mandatory, const char * _desc){
+static void param_new_uint32_(param_ctx_t * ctx,uint32_t * var, const char * _name, uint32_t _def, bool is_mandatory, const char * _desc){
     param_t * f = param_new_param_(ctx, PARAM_UINT, _name, _desc, is_mandatory);
     
     f->def.simple_val.as_uint = _def;
-    f->val.simple_val.as_uint = _def;    
-    return &f->val.simple_val.as_uint;
+    f->ref =  var;    
+    *var = _def;
 }
 
-uint32_t *ParamUint  (const char * name,bool is_mandatory, uint32_t def_val, const char * desc){
-    return param_new_uint32_(&param_ctx, name, def_val, is_mandatory, desc);
+void ParamUint  (uint32_t * var, const char * name,bool is_mandatory, uint32_t def_val, const char * desc){
+    param_new_uint32_(&param_ctx,var, name, def_val, is_mandatory, desc);
 }
 ///==================================================================================
 
 ///=======================================INT=======================================   
-static int * param_new_int_(param_ctx_t * ctx, const char * _name, int _def, bool is_mandatory, const char * _desc){
+static void param_new_int_(param_ctx_t * ctx,int * var, const char * _name, int _def, bool is_mandatory, const char * _desc){
     param_t * f = param_new_param_(ctx, PARAM_INT, _name, _desc, is_mandatory);
     
     f->def.simple_val.as_int = _def;
-    f->val.simple_val.as_int = _def;
-    return &f->val.simple_val.as_int;
+    f->ref = var;
+    *var = _def;
 }
 
-int *ParamInt  (const char * name,bool is_mandatory, int def_val, const char * desc){
-    return param_new_int_(&param_ctx, name, def_val, is_mandatory, desc);
+void ParamInt  (int * var, const char * name,bool is_mandatory, int def_val, const char * desc){
+    param_new_int_(&param_ctx,var, name, def_val, is_mandatory, desc);
 }
 ///==================================================================================
 
 ///=======================================FLOAT=======================================   
-static float * param_new_float_(param_ctx_t * ctx, const char * _name, float _def, bool is_mandatory, const char * _desc){
+static void param_new_float_(param_ctx_t * ctx,float * var, const char * _name, float _def, bool is_mandatory, const char * _desc){
     param_t * f = param_new_param_(ctx, PARAM_FLOAT, _name, _desc, is_mandatory);
     
     f->def.simple_val.as_float = _def;
-    f->val.simple_val.as_float = _def;    
-    return &f->val.simple_val.as_float;
+    f->ref = var;
+    *var = _def;
 }
 
-float *ParamFloat  (const char * name,bool is_mandatory, float def_val, const char * desc){
-    return param_new_float_(&param_ctx, name, def_val, is_mandatory, desc);
+void ParamFloat  (float * var, const char * name,bool is_mandatory, float def_val, const char * desc){
+    param_new_float_(&param_ctx,var, name, def_val, is_mandatory, desc);
 }
 ///==================================================================================
 
 ///=======================================string=======================================   
-static char ** param_new_string_(param_ctx_t * ctx, const char * _name, char * _def, bool is_mandatory , const char * _desc){
+static void param_new_string_(param_ctx_t * ctx,char ** var, const char * _name, char * _def, bool is_mandatory , const char * _desc){
     param_t * f = param_new_param_(ctx, PARAM_STR, _name, _desc, is_mandatory);
     
     f->def.simple_val.as_str = _def;
-    f->val.simple_val.as_str = _def;
-    return &f->val.simple_val.as_str;
+    f->ref = var;
+    *var = _def;
 }
 
-char **ParamStr  (const char * name,bool is_mandatory, char * def_val, const char * desc){
-    return param_new_string_(&param_ctx, name, def_val, is_mandatory, desc);
+void ParamStr  (char ** var, const char * name,bool is_mandatory, char * def_val, const char * desc){
+    param_new_string_(&param_ctx,var, name, def_val, is_mandatory, desc);
 }
 ///==================================================================================
 
 ///=======================================LIST=======================================   
-static param_list_t * param_new_list_(param_ctx_t * ctx, const char * _name, const char * _desc, param_type_e type ){
+static void param_new_list_(param_ctx_t * ctx, param_list_t * var, const char * _name, const char * _desc, param_type_e type ){
     param_t * f = param_new_param_(ctx, PARAM_LIST, _name, _desc, true);
-    f->val.list.type = type;
-    return &f->val.list;
+    
+    f->ref = var;
+    var->type = type;
+    f->def.list.type = type;
 }
 
-param_list_t *ParamList  (const char * name, const char * desc, param_type_e type){
-    return param_new_list_(&param_ctx, name, desc, type);
+void ParamList  (param_list_t * var, const char * name, const char * desc, param_type_e type){
+    param_new_list_(&param_ctx,var, name, desc, type);
 }
 ///==================================================================================
 
 ///=======================================BIN=======================================   
-static uint8_t * param_new_bin_(param_ctx_t * ctx, const char * _name, const char * _desc, uint8_t def ){
+static void param_new_bin_(param_ctx_t * ctx,uint8_t * var, size_t len, const char * _name, const char * _desc, uint8_t def){
     param_t * f = param_new_param_(ctx, PARAM_BINARY, _name, _desc, true);
-    memset(f->val.bin, def, sizeof f->val.bin);
-    return &f->val.bin;
+    f->ref = var;
+    memset(var, def, len);
+
 }
-uint8_t     *ParamBin  (const char * name, const char * desc, uint8_t def_val){
-    return param_new_bin_(&param_ctx, name, desc, def_val);
+void ParamBin  (uint8_t * var,size_t len, const char * name, const char * desc, uint8_t def_val){
+    param_new_bin_(&param_ctx, var, len, name, desc, def_val);
 }
 ///==================================================================================
 
 
 
 static void *param_get_ref(param_t *param){
-    return &param->val;
+    return param->ref;
 }
 
 char *param_name(param_ctx_t * ctx, void *val){
@@ -278,19 +286,15 @@ char * ParamName(void *val){
 
 bool ParseListParam(param_t * p, char * val_start_original, char * val_end_original){
     
-    // Validar entradas básicas
     if (!p || !val_start_original || !val_end_original || *val_start_original != '[' || *val_end_original != ']') {
         return false;
     }
 
-    // Calcular la longitud y crear una COPIA MODIFICABLE de la subcadena relevante.
-    // Esto es crucial para evitar segfaults en memoria de solo lectura.
     size_t len = val_end_original - val_start_original - 1;
     char * input_copy = malloc(len + 1);
     if (!input_copy) {
-        return false; // Error de asignación de memoria
+        return false;
     }
-    // Copiamos el contenido sin los corchetes
     strncpy(input_copy, val_start_original + 1, len);
     input_copy[len] = '\0';
 
@@ -298,30 +302,27 @@ bool ParseListParam(param_t * p, char * val_start_original, char * val_end_origi
     char * next_element_start = input_copy;
     size_t idx = 0;
 
-    // Iteramos usando strtok_r (thread-safe, recomendado) para dividir por ',' o ' '
     char *saveptr;
     char *token = strtok_r(current_element_start, ", ", &saveptr);
 
     while(token != NULL) {
-        // Ignorar tokens vacíos que puedan surgir de espacios extra o comas
         if (strlen(token) == 0) {
             token = strtok_r(NULL, ", ", &saveptr);
             continue;
         }
 
-        // CRUCIAL: Verificar que el puntero de destino sea válido y que no excedamos límites.
         if (idx >= 32) {
-            // Manejar error: lista llena o memoria no asignada previamente.
             free(input_copy);
             return false; 
         }
+        param_list_t * param_list = (param_list_t*)p->ref;
 
-        switch (p->val.list.type) {
+        switch (p->def.list.type) {
             case PARAM_BOOL:{
                 if( strcmp(token, "1") == 0 ||  strcmp(token, "true") == 0  || strcmp(token, "yes") == 0 || strcmp(token, "si") == 0) {
-                    p->val.list.items[idx].as_bool = true;
+                    param_list->items[idx].as_bool = true;
                 } else if (strcmp(token, "0") == 0 ||  strcmp(token, "false") == 0  || strcmp(token, "no") == 0){
-                    p->val.list.items[idx].as_bool = false;
+                    param_list->items[idx].as_bool = false;
                 } else {
                     free(input_copy);
                     return false; // Valor booleano no válido
@@ -336,7 +337,7 @@ bool ParseListParam(param_t * p, char * val_start_original, char * val_end_origi
                     free(input_copy);
                     return false;
                 }
-                p->val.list.items[idx].as_uint = (unsigned int)temp;
+                param_list->items[idx].as_uint = (unsigned int)temp;
             } break;
             
             case PARAM_INT:{    
@@ -347,7 +348,7 @@ bool ParseListParam(param_t * p, char * val_start_original, char * val_end_origi
                      free(input_copy);
                     return false;
                 }
-                p->val.list.items[idx].as_int = (int)temp;
+                param_list->items[idx].as_int = (int)temp;
             } break;
             
             case PARAM_FLOAT:{
@@ -357,14 +358,14 @@ bool ParseListParam(param_t * p, char * val_start_original, char * val_end_origi
                      free(input_copy);
                     return false;
                 }
-                p->val.list.items[idx].as_float = temp;
+                param_list->items[idx].as_float = temp;
             } break;
             
             case PARAM_STR:{
                 // CRUCIAL: Asumimos que p->val.list.items[idx]->as_str 
                 // tiene suficiente espacio asignado (e.g., 256 bytes)
-                strncpy(p->val.list.items[idx].as_str, token, sizeof(p->val.list.items[idx].as_str) - 1);
-                p->val.list.items[idx].as_str[sizeof(p->val.list.items[idx].as_str) - 1] = '\0'; // Asegurar terminador nulo
+                strncpy(param_list->items[idx].as_str, token, sizeof(param_list->items[idx].as_str) - 1);
+                param_list->items[idx].as_str[sizeof(param_list->items[idx].as_str) - 1] = '\0'; // Asegurar terminador nulo
             } break;
         
             default:
@@ -373,7 +374,7 @@ bool ParseListParam(param_t * p, char * val_start_original, char * val_end_origi
         }
 
         idx++;
-        p->val.list.count = idx; // Mantener el contador actualizado
+        param_list->count = idx; // Mantener el contador actualizado
         token = strtok_r(NULL, ", ", &saveptr); // Obtener el siguiente token
     }
 
@@ -457,9 +458,9 @@ bool param_parse_txt(param_ctx_t * c, const char * filename){
                 switch (c->params[i].type){
                     case PARAM_BOOL:{
                         if( strcmp(val_start, "1") == 0 ||  strcmp(val_start, "true") == 0  || strcmp(val_start, "yes") == 0 || strcmp(val_start, "si") == 0) {
-                            c->params[i].val.simple_val.as_bool = true;
+                            *(bool*)c->params[i].ref = true;
                         }else if (strcmp(val_start, "0") == 0 ||  strcmp(val_start, "false") == 0  || strcmp(val_start, "no") == 0){
-                            c->params[i].val.simple_val.as_bool = false;
+                            *(bool*)c->params[i].ref = false;
                         }else{ 
                             c->param_error = PARAM_ERROR_UNKNOWN;
                             return false;
@@ -467,7 +468,7 @@ bool param_parse_txt(param_ctx_t * c, const char * filename){
                         c->params[i].has_changed = true;
                     }break;
                     case PARAM_INT:{
-                        c->params[i].val.simple_val.as_int = atoi(val_start);
+                        *(int*)c->params[i].ref = atoi(val_start);
                         c->params[i].has_changed = true;
                     }break;
                     case PARAM_UINT:{
@@ -477,7 +478,7 @@ bool param_parse_txt(param_ctx_t * c, const char * filename){
                             c->param_error = PARAM_ERROR_INVALID_NUMBER;
                             return false;
                         }
-                        c->params[i].val.simple_val.as_uint = temp;
+                        *(unsigned long int*)c->params[i].ref = temp;
                         c->params[i].has_changed = true;
                     }break;
                     case PARAM_FLOAT:{
@@ -487,11 +488,11 @@ bool param_parse_txt(param_ctx_t * c, const char * filename){
                             c->param_error = PARAM_ERROR_INVALID_NUMBER;
                             return false;
                         }
-                        c->params[i].val.simple_val.as_float = temp;
+                        *(float*)c->params[i].ref = temp;
                         c->params[i].has_changed = true;
                     }break;
                     case PARAM_STR:{
-                        strcpy(c->params[i].val.simple_val.as_str, val_start);
+                        strcpy((char*)c->params[i].ref, val_start);
                         c->params[i].has_changed = true;
                     }break;
                     case PARAM_LIST:{
@@ -512,7 +513,7 @@ bool param_parse_txt(param_ctx_t * c, const char * filename){
                             char temp[3];
                             char * end;
                             strncpy(temp,val_start,2);
-                            c->params[i].val.bin[idx] = (uint8_t)strtoul(temp,&end,16);
+                            *(((uint8_t*)(c->params[i].ref))+idx) = (uint8_t)strtoul(temp,&end,16);
                             val_start+=2;
                             idx++;
                         }
