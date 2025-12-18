@@ -1,7 +1,21 @@
 
 #ifndef TIMERS_H_
 #define TIMERS_H_
-#include <stdint.h>
+#include "stdint.h"
+typedef struct{
+    bool on;
+    bool end;
+    uint32_t count;
+    uint32_t len;
+}mytimer_t;
+
+
+void MyTimerInit(mytimer_t * tim);
+void MyTimerStart(mytimer_t * tim, uint32_t timeout_ms);
+void MyTimerStop(mytimer_t * tim);
+void MyTimerCycle(mytimer_t * tim);
+void MyTimerReset(mytimer_t * tim);
+
 
 #ifndef UNUSED_VAR
 #define UNUSED_VAR(a) (void)(a)
@@ -12,6 +26,8 @@
 #ifndef ARRAY_LEN
 #define ARRAY_LEN(arr) (sizeof(arr)/sizeof((arr)[0]))
 #endif
+#ifdef TIMERS_IMP
+
 
 #if defined(_WIN32)
   #include <windows.h>
@@ -37,24 +53,6 @@
   }
 #endif
 
-
-#include "stdint.h"
-typedef struct{
-    bool on;
-    bool end;
-    uint32_t count;
-    uint32_t len;
-}mytimer_t;
-
-
-void MyTimerInit(mytimer_t * tim);
-void MyTimerStart(mytimer_t * tim, uint32_t timeout_ms);
-void MyTimerStop(mytimer_t * tim);
-void MyTimerCycle(mytimer_t * tim);
-void MyTimerReset(mytimer_t * tim);
-
-
-#ifdef TIMERS_IMP
 void MyTimerInit(mytimer_t * tim){
     tim->count = 0;
     tim->end = false;

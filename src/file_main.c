@@ -16,7 +16,24 @@ paramstruct_t paramstruct;
 char paramstr[265];
 uint32_t paramuint;
 bool parambool;
+csv_fileh_t fileh;
 int main(){
+    
+    ParamBin((uint8_t*)&paramstruct,sizeof paramstruct,"PSTRUCT", "an struct", 0);
+
+    paramstruct.a = 10;
+    paramstruct.b = 37;
+    paramstruct.c = 398;
+
+    ParamSave("save_params_txt.txt", FILE_TYPE_TXT);
+
+    if(!ParamParse("save_params_txt.txt", FILE_TYPE_TXT)){
+        ParamPrintError(stdout);
+        printf("failed to parse txt\n");
+        return -1;
+    }
+
+    printf("STRUCT: A-> %d, B-> %d, C-> %d\n", paramstruct.a,paramstruct.b,paramstruct.c);
 
 
     ParamInt(&paramint,"PINT", true, 3,"an int value");
@@ -25,9 +42,9 @@ int main(){
     ParamUint(&paramuint,"PUINT", false, 5,"a uint param");
     ParamBool(&parambool,"PBOOL", false, false,"a bool param");
 
+
     ParamList(&paramlist,"PLIST", false, PARAM_INT);
-    ParamBin(&paramstruct,sizeof paramstruct,"PSTRUCT", "an struct", 0);
-    ParamStr(&paramstr,"PSTR",true,"no","a string param");
+    ParamStr((char**)&paramstr,"PSTR",true,"no","a string param");
 
     if(!ParamParse("../params/params.txt", FILE_TYPE_TXT)){
         ParamPrintError(stdout);
@@ -44,21 +61,30 @@ int main(){
     printf("STR: %s\n", paramstr);
 
     printf("LIST:");
-    for(int i = 0; i < paramlist.count; ++i){
-        printf(" %d",paramlist.items[i]);
+    for(size_t i = 0; i < paramlist.count; ++i){
+        printf(" %d",paramlist.items[i].as_int);
     }
     printf("\n");
 
     printf("STRUCT: A-> %d, B-> %d, C-> %d\n", paramstruct.a,paramstruct.b,paramstruct.c);
 
 
-    if(!InitCSV(".",","))return -1;
+    if(!InitCSV(".",",", &fileh))return -1;
     if(!ParamParse("../params/data.csv", FILE_TYPE_CSV))return -1;
 
     float buff[50];
-    int data_size = GetCSVData("velocity",buff, sizeof buff);
+    int data_size = GetCSVData("size",buff, sizeof buff);
 
-    printf("velocity: [");
+    float newrow[4] = {69,69,69,69};
+    if(!AddRowCSV(newrow, ARRAY_LEN(newrow)))return -1;
+
+    paramfloat = 1239.9876543210;
+
+    if(!ParamSave("save_params_txt.txt", FILE_TYPE_TXT))return -1;
+    if(!ParamSave("save_params_csv.csv", FILE_TYPE_CSV))return -1;
+
+
+    printf("size: [");
     for(int i = 0; i < data_size; ++i){
         printf(" %.2f",buff[i]);
     }

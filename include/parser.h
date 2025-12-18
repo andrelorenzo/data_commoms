@@ -1,35 +1,8 @@
 #ifndef PARSER_H_
 #define PARSER_H_
+
 #include "stdbool.h"
 #include "stdint.h"
-#include "stddef.h"
-#include "assert.h"
-#include "string.h"
-#include "stdio.h"
-#include "stdlib.h"
-#include "limits.h"
-#include "errno.h"
-#include <ctype.h>
-
-#ifndef FLAG_ASSERT
-#define FLAG_ASSERT(b) assert(b)    
-#endif // FLAG_ASSERT
-
-#ifndef UNUSED_VAR
-#define UNUSED_VAR(a) (void)(a)
-#endif // UNUSED_VAR
-
-#ifndef UNUSED_FN
-#define UNUSED_FN (void)
-#endif // UNUSED_FN
-
-#ifndef ARRAY_LEN
-#define ARRAY_LEN(arr) (sizeof(arr)/sizeof((arr)[0]))
-#endif // ARRAY_LEN
-
-#ifndef FLAGS_CAP
-#define FLAGS_CAP 256
-#endif // FLAGS_CAP
 
 #ifndef FLAG_LIST_INIT_CAP
 #define FLAG_LIST_INIT_CAP 1024
@@ -54,9 +27,6 @@ size_t      *FlagSize  (const char * name,bool is_mandatory, size_t    def_val, 
 flag_list_t *FlagList  (const char * name,bool is_mandatory                   , const char * desc); 
 
 bool        FlagParse(int argc, char ** argv);
-
-
-
 void        FlagPrintHelp(FILE * stream);
 void        FlagPrintError(FILE * stream);
 
@@ -65,7 +35,39 @@ char **     FlagRestArgv(void);
 const char *FlagProgramName(void);
 char *      FlagName(void *val);
 
+#ifndef FLAG_ASSERT
+#define FLAG_ASSERT(b) assert(b)    
+#endif // FLAG_ASSERT
+
+#ifndef UNUSED_VAR
+#define UNUSED_VAR(a) (void)(a)
+#endif // UNUSED_VAR
+
+#ifndef UNUSED_FN
+#define UNUSED_FN (void)
+#endif // UNUSED_FN
+
+#ifndef ARRAY_LEN
+#define ARRAY_LEN(arr) (sizeof(arr)/sizeof((arr)[0]))
+#endif // ARRAY_LEN
+
+#ifndef FLAGS_CAP
+#define FLAGS_CAP 256
+#endif // FLAGS_CAP
+
+
+
+
 #ifdef PARSER_IMP
+
+#include "stddef.h"
+#include "assert.h"
+#include "string.h"
+#include "stdio.h"
+#include "stdlib.h"
+#include "limits.h"
+#include "errno.h"
+#include <ctype.h>
 
 typedef enum {
     FLAG_BOOL = 0,

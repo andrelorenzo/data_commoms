@@ -2,34 +2,11 @@
 #define FILE_PARSER_H_
 #include "stdbool.h"
 #include "stdint.h"
-#include "stddef.h"
-#include "assert.h"
-#include "string.h"
-#include "stdio.h"
-#include "stdlib.h"
-#include "limits.h"
-#include "errno.h"
-#include <ctype.h>
 
-#ifndef PARAM_ASSERT
-#define PARAM_ASSERT(b) assert(b)    
-#endif // PARAM_ASSERT
 
-#ifndef UNUSED_VAR
-#define UNUSED_VAR(a) (void)(a)
-#endif // UNUSED_VAR
-
-#ifndef UNUSED_FN
-#define UNUSED_FN (void)
-#endif // UNUSED_FN
-
-#ifndef ARRAY_LEN
-#define ARRAY_LEN(arr) (sizeof(arr)/sizeof((arr)[0]))
-#endif // ARRAY_LEN
-
-#ifndef FLAGS_CAP
-#define FLAGS_CAP 256
-#endif // FLAGS_CAP
+#ifndef MAX_BIN
+#define MAX_BIN 2048
+#endif // MAX_BIN
 
 #ifndef PARAM_LIST_INIT_CAP
 #define PARAM_LIST_INIT_CAP 1024
@@ -66,6 +43,19 @@ typedef enum{
     FILE_TYPE_CSV
 }file_type_e;
 
+typedef struct{
+    char column_name[256];
+    float column_item[MAX_BIN];
+}csv_data_t;
+
+typedef struct{
+    csv_data_t csv_data[MAX_BIN];
+    size_t item_count;
+    size_t col_count;
+    char *column_sep;
+    char *decimal_sep;
+}csv_fileh_t;
+
 
 /* ARGUMENT BASED PARSER*/
 
@@ -77,17 +67,50 @@ void ParamStr   (char ** var, const char * name,bool is_mandatory, char *    def
 void ParamList  (param_list_t * var, const char * name, const char * desc, param_type_e type); 
 void ParamBin   (uint8_t * var, size_t len, const char * name, const char * desc, uint8_t def_val);
 
-bool InitCSV    (const char * dec_sep, const char * col_sep); 
+bool InitCSV  (const char * dec_sep, const char * col_sep, csv_fileh_t * fileh);
 int  GetCSVData (const char * name, float * data, size_t data_len);
+bool AddRowCSV(float * row, size_t row_n);
 
 
+bool  ParamSave(const char * filename, file_type_e type);
 bool  ParamParse(const char * filename, file_type_e type);
 void  ParamPrintError(FILE * stream);
 char *ParamName(void *val);
 
+
+
+#ifndef PARAM_ASSERT
+#define PARAM_ASSERT(b) assert(b)    
+#endif // PARAM_ASSERT
+
+#ifndef UNUSED_VAR
+#define UNUSED_VAR(a) (void)(a)
+#endif // UNUSED_VAR
+
+#ifndef UNUSED_FN
+#define UNUSED_FN (void)
+#endif // UNUSED_FN
+
+#ifndef ARRAY_LEN
+#define ARRAY_LEN(arr) (sizeof(arr)/sizeof((arr)[0]))
+#endif // ARRAY_LEN
+
+#ifndef FLAGS_CAP
+#define FLAGS_CAP 256
+#endif // FLAGS_CAP
+
+
+
 #ifdef PARSER_IMP
 
-#define MAX_BIN 2048
+#include "stddef.h"
+#include "assert.h"
+#include "string.h"
+#include "stdio.h"
+#include "stdlib.h"
+#include "limits.h"
+#include "errno.h"
+#include <ctype.h>
 
 typedef union {
     param_simple_val_u simple_val;
@@ -120,11 +143,7 @@ typedef struct {
     bool has_changed;
 } param_t;
 
-typedef struct{
-    char column_name[256];
-    float column_item[MAX_BIN];
-    size_t item_count;
-}csv_data_t;
+
 
 typedef struct {
     // txt params
@@ -132,10 +151,7 @@ typedef struct {
     size_t params_count;
 
     // csv data 
-    csv_data_t csv_data[MAX_BIN];
-    size_t col_count;
-    char *column_sep;
-    char *decimal_sep;
+    csv_fileh_t * csv_fileh;
 
     param_error_e param_error;
 } param_ctx_t;
@@ -256,6 +272,7 @@ static void param_new_bin_(param_ctx_t * ctx,uint8_t * var, size_t len, const ch
     param_t * f = param_new_param_(ctx, PARAM_BINARY, _name, _desc, true);
     f->ref = var;
     memset(var, def, len);
+    f->list_bin_len = len;
 
 }
 void ParamBin  (uint8_t * var,size_t len, const char * name, const char * desc, uint8_t def_val){
@@ -299,7 +316,6 @@ bool ParseListParam(param_t * p, char * val_start_original, char * val_end_origi
     input_copy[len] = '\0';
 
     char * current_element_start = input_copy;
-    char * next_element_start = input_copy;
     size_t idx = 0;
 
     char *saveptr;
@@ -444,6 +460,9 @@ bool param_parse_txt(param_ctx_t * c, const char * filename){
                 if(c->params[i].type == PARAM_LIST){
                     val_end = strstr(val_start,"]");
                     val_end++;
+                }else if(c->params[i].type == PARAM_STR){
+                    val_start++;
+                    val_end = strstr(val_start,"\"");
                 }else{
                     val_end = strstr(val_start," ");
                     if(!val_end){
@@ -505,7 +524,7 @@ bool param_parse_txt(param_ctx_t * c, const char * filename){
                             val_start += 2;
                         }
                         if((val_end - val_start)/2 > MAX_BIN){
-                            c->param_error == PARAM_ERROR_BIN_OVERFLOW;
+                            c->param_error = PARAM_ERROR_BIN_OVERFLOW;
                             return false;
                         }
                         size_t idx = 0;
@@ -548,14 +567,27 @@ bool param_parse_txt(param_ctx_t * c, const char * filename){
     return true;
 }
 
-bool InitCSV  (const char * dec_sep, const char * col_sep){
+bool InitCSV  (const char * dec_sep, const char * col_sep, csv_fileh_t * fileh){
     if(*dec_sep == *col_sep)return false;
 
-    param_ctx.csv_data->item_count = 0;
-    param_ctx.col_count = 0;
+    param_ctx.csv_fileh = fileh;
 
-    param_ctx.decimal_sep = (char*)dec_sep;
-    param_ctx.column_sep = (char*)col_sep;
+    param_ctx.csv_fileh->item_count = 0;
+    param_ctx.csv_fileh->col_count = 0;
+
+    param_ctx.csv_fileh->decimal_sep = (char*)dec_sep;
+    param_ctx.csv_fileh->column_sep = (char*)col_sep;
+    return true;
+}
+
+bool AddRowCSV(float * row, size_t row_n){
+    if(row_n != param_ctx.csv_fileh->col_count)return false;
+
+    int n = param_ctx.csv_fileh->item_count; 
+    for(size_t i = 0; i < row_n; ++i){
+        param_ctx.csv_fileh->csv_data[i].column_item[n] = row[i];
+    }
+    param_ctx.csv_fileh->item_count++;
     return true;
 }
 
@@ -566,22 +598,22 @@ int GetCSVData(const char * name, float * data, size_t data_len){
     for (int i = 0; low_name[i] != '\0'; i++) {
         low_name[i] = (char)tolower((unsigned char)low_name[i]);
     }
-    if(data_len < param_ctx.csv_data->item_count)return -1;
-    int i;
+    if(data_len < param_ctx.csv_fileh->item_count)return -1;
+    size_t i;
     bool found = false;
-    for(i = 0; i < param_ctx.col_count; ++i){
-        if(strstr(param_ctx.csv_data[i].column_name, low_name)){
+    for(i = 0; i < param_ctx.csv_fileh->col_count; ++i){
+        if(strstr(param_ctx.csv_fileh->csv_data[i].column_name, low_name)){
             found = true;
             break;
         }
     }
     if(!found)return false;
 
-    for(int j = 0; j < param_ctx.csv_data[i].item_count; ++j){
-        data[j] = param_ctx.csv_data[i].column_item[j];
+    for(size_t j = 0; j < param_ctx.csv_fileh->item_count; ++j){
+        data[j] = param_ctx.csv_fileh->csv_data[i].column_item[j];
     }
 
-    return param_ctx.csv_data[i].item_count;
+    return param_ctx.csv_fileh->item_count;
 }
 
 void csv_new_headers(char * line, size_t size, param_ctx_t * c){
@@ -597,29 +629,32 @@ void csv_new_headers(char * line, size_t size, param_ctx_t * c){
              line[size - 2] = '\0';
         }
     }
-    token = strtok_r(line, c->column_sep, &saveptr);
+    token = strtok_r(line, c->csv_fileh->column_sep, &saveptr);
 
     while (token != NULL) {
         for (int i = 0; token[i] != '\0'; i++) {
             token[i] = (char)tolower((unsigned char)token[i]);
         }
         if (idx < MAX_BIN) {
-            strncpy(c->csv_data[idx].column_name, token, sizeof(c->csv_data[idx].column_name) - 1);
-            c->csv_data[idx].column_name[sizeof(c->csv_data[idx].column_name) - 1] = '\0';
+            strncpy(c->csv_fileh->csv_data[idx].column_name, token, sizeof(c->csv_fileh->csv_data[idx].column_name) - 1);
+            c->csv_fileh->csv_data[idx].column_name[sizeof(c->csv_fileh->csv_data[idx].column_name) - 1] = '\0';
             
-            char * space = strstr(c->csv_data[idx].column_name, " ");
+            char * space = strstr(c->csv_fileh->csv_data[idx].column_name, " ");
+            char * scape = strstr(c->csv_fileh->csv_data[idx].column_name, "\n");
             if(space){
                 *space = '\0';
+            }else if(scape){
+                *scape = '\0'; 
             }
             idx++;
         } else {
             fprintf(stderr, "Error: Demasiadas columnas en el CSV, superado el límite.\n");
             break;
         }
-        token = strtok_r(NULL, c->column_sep, &saveptr);
+        token = strtok_r(NULL, c->csv_fileh->column_sep, &saveptr);
     }
 
-    c->col_count = idx;
+    c->csv_fileh->col_count = idx;
 }
 
 bool param_parse_csv(param_ctx_t * c, const char * filename){
@@ -629,18 +664,10 @@ bool param_parse_csv(param_ctx_t * c, const char * filename){
     if(!fileh)return false;
 
     char line[2048];
-    char * pt = line;
-
-    const char * ds = c->decimal_sep;
-    const char * cs = c->column_sep; 
-
     fgets(line, sizeof line, fileh);
     csv_new_headers(line, sizeof line, c);
 
-    size_t cols = 0;
     while (fgets(line, sizeof line, fileh)) {
-        // --- PRE-PROCESAMIENTO DE LA LÍNEA ---
-        // Eliminar saltos de línea (CRLF o LF) para que strtok_r no los trate como parte del último token
         size_t len = strlen(line);
         if (len > 0 && (line[len - 1] == '\n' || line[len - 1] == '\r')) {
             line[len - 1] = '\0';
@@ -653,7 +680,7 @@ bool param_parse_csv(param_ctx_t * c, const char * filename){
         char *saveptr;
         size_t cols = 0;
         size_t row_index = 0;
-        token = strtok_r(line, c->column_sep, &saveptr);
+        token = strtok_r(line, c->csv_fileh->column_sep, &saveptr);
 
         while (token != NULL) {
 
@@ -662,7 +689,7 @@ bool param_parse_csv(param_ctx_t * c, const char * filename){
                 break;
             }
 
-            size_t current_item_idx = c->csv_data[cols].item_count;
+            size_t current_item_idx = c->csv_fileh->item_count;
             if (current_item_idx >= MAX_BIN) {
                  fprintf(stderr, "Error: Demasiados items en la columna %zu.\n", cols);
                  c->param_error = PARAM_ERROR_INVALID_NUMBER;
@@ -670,10 +697,10 @@ bool param_parse_csv(param_ctx_t * c, const char * filename){
             }
 
             if (strlen(token) == 0) {
-                c->csv_data[cols].column_item[current_item_idx] = 0.0f;
+                c->csv_fileh->csv_data[cols].column_item[current_item_idx] = 0.0f;
             } else {
-                if (*c->decimal_sep != '.') {
-                    char *dec_sep_pos = strstr(token, c->decimal_sep);
+                if (*c->csv_fileh->decimal_sep != '.') {
+                    char *dec_sep_pos = strstr(token, c->csv_fileh->decimal_sep);
                     if (dec_sep_pos != NULL) {
                         *dec_sep_pos = '.';
                     }
@@ -687,19 +714,132 @@ bool param_parse_csv(param_ctx_t * c, const char * filename){
                     return false;
                 }
                 
-                c->csv_data[cols].column_item[current_item_idx] = temp;
+                c->csv_fileh->csv_data[cols].column_item[current_item_idx] = temp;
             }
 
-            c->csv_data[cols].item_count++;
             cols++;
-            token = strtok_r(NULL, c->column_sep, &saveptr);
+            token = strtok_r(NULL, c->csv_fileh->column_sep, &saveptr);
         }
-        
+        c->csv_fileh->item_count++;
         row_index++;
     }
 
     c->param_error = PARAM_NO_ERROR;
     return true;
+}
+
+static bool param_save_txt(param_ctx_t * c, const char * filename){
+    if(c->params_count == 0){
+
+        return false;
+    }
+    FILE * fouth = fopen(filename, "w");
+    if(!fouth){
+        fclose(fouth);
+        return false;
+    }
+
+
+    for(size_t i = 0; i < c->params_count; ++i){
+        switch (c->params[i].type){
+            case PARAM_BOOL:{
+                fprintf(fouth,"%s=%s #%s\n",
+                    c->params[i].name, 
+                    *(bool*)c->params[i].ref ? "true":"false",
+                    c->params[i].desc);
+            }break;
+            case PARAM_UINT:{
+                fprintf(fouth,"%s=%d #%s\n",
+                    c->params[i].name, 
+                    *(uint32_t*)c->params[i].ref,
+                    c->params[i].desc);
+            }break;
+            case PARAM_INT:{
+                fprintf(fouth,"%s=%i #%s\n",
+                    c->params[i].name, 
+                    *(int*)c->params[i].ref,
+                    c->params[i].desc);
+            }break;
+            case PARAM_FLOAT:{
+                fprintf(fouth,"%s=%.6f #%s\n",
+                    c->params[i].name, 
+                    *(float*)c->params[i].ref,
+                    c->params[i].desc);
+            }break;
+            case PARAM_STR:{
+                fprintf(fouth,"%s=\"%s\" #%s\n",
+                    c->params[i].name, 
+                    (char*)c->params[i].ref,
+                    c->params[i].desc);
+            }break;
+            case PARAM_LIST:{
+                fprintf(fouth,"%s=[", c->params[i].name);
+                param_list_t * list = (param_list_t*)c->params[i].ref;
+                for(size_t j = 0; j < list->count; ++j){
+                    const char *sep = (j == (list->count - 1)) ? "]" : ",";
+                    
+                    switch (list->type){
+                        case PARAM_BOOL:fprintf(fouth, "%s%s", list->items[j].as_bool ? "true":"false", sep);break;
+                        case PARAM_UINT:fprintf(fouth, "%d%s", list->items[j].as_uint, sep);break;
+                        case PARAM_INT: fprintf(fouth, "%i%s", list->items[j].as_int, sep);break;
+                        case PARAM_FLOAT:fprintf(fouth, "%.6f%s", list->items[j].as_float, sep);break;
+                        case PARAM_STR:fprintf(fouth, "\"%s\"%s", list->items[j].as_str, sep);break;
+                        default:fclose(fouth);return false;
+                    }
+                }
+                fprintf(fouth,"\n");
+
+            }break;
+            case PARAM_BINARY:{
+                fprintf(fouth, "%s=0x",c->params[i].name);
+                for(size_t j = 0; j < c->params[i].list_bin_len; ++j){
+                    fprintf(fouth, "%02X", *( (uint8_t*)c->params[i].ref + j ) );
+                }
+                fprintf(fouth,"\n");
+            }break;
+            default:fclose(fouth);return false;
+        }
+    }
+    fclose(fouth);
+    return true;
+}
+
+
+static bool param_save_csv(param_ctx_t * c, const char * filename){
+    if(c->csv_fileh->col_count == 0 || c->csv_fileh->item_count == 0)return false;
+
+    FILE * fouth = fopen(filename, "w");
+    if(!fouth)return false;
+
+
+    // headers
+    for(size_t i = 0; i < c->csv_fileh->col_count; ++i){
+        if(i == (c->csv_fileh->col_count - 1))fprintf(fouth,"%s", c->csv_fileh->csv_data[i].column_name);
+        else fprintf(fouth,"%s,", c->csv_fileh->csv_data[i].column_name);
+    }
+    fprintf(fouth,"\n");
+
+
+
+    // data
+    for(size_t j = 0; j < c->csv_fileh->item_count; ++j){
+        for(size_t i = 0; i < c->csv_fileh->col_count; ++i){
+            if(i == (c->csv_fileh->col_count - 1))fprintf(fouth,"%f", c->csv_fileh->csv_data[i].column_item[j]);
+            else fprintf(fouth,"%f,", c->csv_fileh->csv_data[i].column_item[j]);
+        }
+        fprintf(fouth,"\n");
+    }
+
+    fclose(fouth);
+    return true;
+}
+
+bool  ParamSave(const char * filename, file_type_e type){
+    switch (type){
+        case FILE_TYPE_TXT:return param_save_txt(&param_ctx, filename);
+        case FILE_TYPE_CSV:return param_save_csv(&param_ctx, filename);
+        default:return false;
+    }
 }
 
 bool ParamParse(const char * filename, file_type_e type){

@@ -1,7 +1,6 @@
 #ifndef LOGGER_H_
 #define LOGGER_H_
-#include "stdarg.h"
-#include "stdio.h"
+
 
 typedef enum{
     DEBUG = 0U,
@@ -14,11 +13,11 @@ typedef enum{
 
 static verb_e max_verbosity = WARN;
 
-#if defined(_WIN32) || defined(__unix__) || defined(__APPLE__)
-#define LOGGER_WEAK __attribute__((weak))
-#else
-#define LOGGER_WEAK __weak
-#endif
+void Logger(verb_e verbosity, const char * format, ...);
+verb_e LoggerGetVerbsity(void);
+void LoggerSetVerbsity(verb_e);
+
+
 
 #ifndef UNUSED_VAR
 #define UNUSED_VAR(a) (void)(a)
@@ -30,13 +29,16 @@ static verb_e max_verbosity = WARN;
 #define ARRAY_LEN(arr) (sizeof(arr)/sizeof((arr)[0]))
 #endif
 
-void Logger(verb_e verbosity, const char * format, ...);
-verb_e LoggerGetVerbsity(void);
-void LoggerSetVerbsity(verb_e);
-
-
-#define LOGGER_IMP 
 #ifdef LOGGER_IMP
+
+#if defined(_WIN32) || defined(__unix__) || defined(__APPLE__)
+#define LOGGER_WEAK __attribute__((weak))
+#else
+#define LOGGER_WEAK __weak
+#endif
+
+#include "stdarg.h"
+#include "stdio.h"
 
 /// @brief Get the actual verbosity level
 /// @return the actual verbosity level

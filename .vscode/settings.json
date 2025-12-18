@@ -35,6 +35,7 @@
         "cmocka.h": "c",
         "cstdint": "c",
         "parser.h": "c",
-        "file_parser.h": "c"
+        "file_parser.h": "c",
+        "unordered_map": "c"
     }
 }
