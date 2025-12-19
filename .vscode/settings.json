@@ -30,6 +30,7 @@
         "pthread.h": "c",
         "pthread_stack_min-dynamic.h": "c",
         "timers.h": "c",
-        "stdint.h": "c"
+        "stdint.h": "c",
+        "stdlib.h": "c"
     }
 }

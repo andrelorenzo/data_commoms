@@ -1,5 +1,13 @@
 #include "stdio.h"
+
+#if defined(__unix__) || defined(__APPLE__) 
 #include <pthread.h>
+#define RETURN_TYPE void*
+#else
+#include "threads.h"
+#define RETURN_TYPE int
+#endif
+
 #include "stdlib.h"
 #include "time.h"
 
@@ -22,7 +30,7 @@ static cb_t cb;
 static mytimer_t tim[MAX_TIMERS_IND];
 
 // this is like a dma interrupt callback in stm32
-void *dma_th(void *arg){
+RETURN_TYPE dma_th(void *arg){
     (void)arg;
     // simulamos NDTR: empieza “lleno” (no escribió nada todavía)
     uint32_t ndtr = BUFFER_SZ;
@@ -66,11 +74,15 @@ void *dma_th(void *arg){
             last = now;
         }
     }
+#if defined(__unix__) || defined(__APPLE__) 
     return NULL;
+#else
+    return 0;
+#endif
 }
 
 // this is like a timer interrupt callback in stm32
-void * timer_th(void * arg){
+RETURN_TYPE timer_th(void * arg){
     UNUSED_VAR(arg);
     uint32_t last = 0;
     while(1){
@@ -81,20 +93,35 @@ void * timer_th(void * arg){
         }
         
     }
+#if defined(__unix__) || defined(__APPLE__) 
+    return NULL;
+#else
+    return 0;
+#endif
 }
 
 int main(){
+#if defined(__unix__) || defined(__APPLE__) 
     pthread_t th_dma, th_tim;
+#else
+    thrd_t th_dma, th_tim;
+#endif
     srand((unsigned)time(NULL));
+
+
 
     CbInit(&cb, in_buffer, BUFFER_SZ, "test_cb");
     for (size_t i=0; i<MAX_TIMERS_IND; ++i) MyTimerInit(&tim[i]);
 
     // Timers de muestra (usa el GENERAL_READ o quítalo si prefieres el modo B de lectura)
     MyTimerStart(&tim[GENERAL_READ], 5000);
-
+#if defined(__unix__) || defined(__APPLE__) 
     pthread_create(&th_dma, NULL, dma_th, NULL);
     pthread_create(&th_tim, NULL, timer_th, NULL);
+#else
+    thrd_create(&th_dma, dma_th, NULL);
+    thrd_create(&th_tim, timer_th, NULL);
+#endif
 
     // --- MODO A: consumidor muy lento (cada 5 s) ---
 #if 0
