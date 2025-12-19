@@ -1,1 +1,1 @@
-/usr/bin/gcc -Wall -Wextra -pedantic -g -lrt CMakeFiles/main.dir/src/main.c.o -o main 
+/usr/bin/gcc -Wall -Wextra -pedantic -g CMakeFiles/main.dir/src/file_main.c.o -o main

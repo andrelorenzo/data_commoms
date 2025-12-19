@@ -1,0 +1,17 @@
+
+PINT = 3
+
+
+PFLOAT = 5 
+PFLOAT2 = 6.89 # THIS IS A COMMENT
+
+PLIST = [1 2 3 4 5] # or [1,2,3,4,5]
+
+# THIS IS A COMMENT
+PUINT = 89
+
+PSTR = "ADIOS" # or ADIOS
+
+PBOOL = no # 1, 0, true, false, yes, no
+
+PSTRUCT = 0x010002000300

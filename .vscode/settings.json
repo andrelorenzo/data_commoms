@@ -31,6 +31,15 @@
         "pthread_stack_min-dynamic.h": "c",
         "timers.h": "c",
         "stdint.h": "c",
+<<<<<<< HEAD
         "stdlib.h": "c"
+=======
+        "climits": "cpp",
+        "cmocka.h": "c",
+        "cstdint": "c",
+        "parser.h": "c",
+        "file_parser.h": "c",
+        "unordered_map": "c"
+>>>>>>> 46699f068ca1bdc4a04b04b5e3f99f80834da4f2
     }
 }
