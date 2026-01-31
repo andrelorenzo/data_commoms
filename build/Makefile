@@ -504,6 +504,19 @@ main/fast:
 .PHONY : main/fast
 
 #=============================================================================
+# Target rules for targets named comms
+
+# Build rule for target.
+comms: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 comms
+.PHONY : comms
+
+# fast build rule for target.
+comms/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/comms.dir/build.make CMakeFiles/comms.dir/build
+.PHONY : comms/fast
+
+#=============================================================================
 # Target rules for targets named parser_test
 
 # Build rule for target.
@@ -515,6 +528,30 @@ parser_test: cmake_check_build_system
 parser_test/fast:
 	$(MAKE) $(MAKESILENT) -f tests/CMakeFiles/parser_test.dir/build.make tests/CMakeFiles/parser_test.dir/build
 .PHONY : parser_test/fast
+
+src/comms_main.o: src/comms_main.c.o
+.PHONY : src/comms_main.o
+
+# target to build an object file
+src/comms_main.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/comms.dir/build.make CMakeFiles/comms.dir/src/comms_main.c.o
+.PHONY : src/comms_main.c.o
+
+src/comms_main.i: src/comms_main.c.i
+.PHONY : src/comms_main.i
+
+# target to preprocess a source file
+src/comms_main.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/comms.dir/build.make CMakeFiles/comms.dir/src/comms_main.c.i
+.PHONY : src/comms_main.c.i
+
+src/comms_main.s: src/comms_main.c.s
+.PHONY : src/comms_main.s
+
+# target to generate assembly for a file
+src/comms_main.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/comms.dir/build.make CMakeFiles/comms.dir/src/comms_main.c.s
+.PHONY : src/comms_main.c.s
 
 src/file_main.o: src/file_main.c.o
 .PHONY : src/file_main.o
@@ -577,8 +614,12 @@ help:
 	@echo "... NightlySubmit"
 	@echo "... NightlyTest"
 	@echo "... NightlyUpdate"
+	@echo "... comms"
 	@echo "... main"
 	@echo "... parser_test"
+	@echo "... src/comms_main.o"
+	@echo "... src/comms_main.i"
+	@echo "... src/comms_main.s"
 	@echo "... src/file_main.o"
 	@echo "... src/file_main.i"
 	@echo "... src/file_main.s"

@@ -79,6 +79,7 @@ void Logger(verb_e verbosity, const char * format, ...){
         printOut(msg, size);
 
     }
+    TODO:
 
 }
 #endif // LOGGER_IMP

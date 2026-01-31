@@ -6,6 +6,12 @@
   "output": "CMakeFiles/main.dir/src/file_main.c.o"
 },
 {
+  "directory": "/home/andrelorent/programming/data_common/build",
+  "command": "/usr/bin/gcc  -I/home/andrelorent/programming/data_common/include -Wall -Wextra -pedantic -g -o CMakeFiles/comms.dir/src/comms_main.c.o -c /home/andrelorent/programming/data_common/src/comms_main.c",
+  "file": "/home/andrelorent/programming/data_common/src/comms_main.c",
+  "output": "CMakeFiles/comms.dir/src/comms_main.c.o"
+},
+{
   "directory": "/home/andrelorent/programming/data_common/build/tests",
   "command": "/usr/bin/gcc  -I/home/andrelorent/programming/data_common/include -I\"/home/andrelorent/programming/data_common/tests/ /home/andrelorent/programming/data_common/include\" -Wall -Wextra -pedantic -g -o CMakeFiles/parser_test.dir/parser_test.c.o -c /home/andrelorent/programming/data_common/tests/parser_test.c",
   "file": "/home/andrelorent/programming/data_common/tests/parser_test.c",

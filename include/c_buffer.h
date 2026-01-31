@@ -1,5 +1,19 @@
+/**
+ * @file c_buffer.h
+ * @author André Lorenzo Torres (andrelorenzotorres@gmail.com)
+ * @brief Circular buffer implemmentation, with DMA (Windows, Linux and STM32 compliant).
+ * @version 0.1
+ * @date 19-03-2024
+ * 
+ */
+
 #ifndef C_BUFFER_H_
 #define C_BUFFER_H_
+
+/*
+    WINDOWS, LINUX, STM32
+*/
+
 #include "stdint.h"
 #include "string.h"
 #include "stdbool.h"

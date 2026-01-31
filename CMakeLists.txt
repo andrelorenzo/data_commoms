@@ -15,3 +15,5 @@ if (UNIT_TESTING)
 endif()
 
 add_executable(main src/file_main.c)
+
+add_executable(comms src/comms_main.c)

@@ -64,11 +64,13 @@ CMAKE_BINARY_DIR = /home/andrelorent/programming/data_common/build
 
 # The main recursive "all" target.
 all: CMakeFiles/main.dir/all
+all: CMakeFiles/comms.dir/all
 all: tests/all
 .PHONY : all
 
 # The main recursive "codegen" target.
 codegen: CMakeFiles/main.dir/codegen
+codegen: CMakeFiles/comms.dir/codegen
 codegen: tests/codegen
 .PHONY : codegen
 
@@ -106,6 +108,7 @@ clean: CMakeFiles/ContinuousCoverage.dir/clean
 clean: CMakeFiles/ContinuousMemCheck.dir/clean
 clean: CMakeFiles/ContinuousSubmit.dir/clean
 clean: CMakeFiles/main.dir/clean
+clean: CMakeFiles/comms.dir/clean
 clean: tests/clean
 .PHONY : clean
 
@@ -1031,7 +1034,7 @@ CMakeFiles/ContinuousSubmit.dir/clean:
 CMakeFiles/main.dir/all:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/andrelorent/programming/data_common/build/CMakeFiles --progress-num=1,2 "Built target main"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/andrelorent/programming/data_common/build/CMakeFiles --progress-num=3,4 "Built target main"
 .PHONY : CMakeFiles/main.dir/all
 
 # Build rule for subdir invocation for target.
@@ -1048,7 +1051,7 @@ main: CMakeFiles/main.dir/rule
 # codegen rule for target.
 CMakeFiles/main.dir/codegen:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/codegen
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/andrelorent/programming/data_common/build/CMakeFiles --progress-num=1,2 "Finished codegen for target main"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/andrelorent/programming/data_common/build/CMakeFiles --progress-num=3,4 "Finished codegen for target main"
 .PHONY : CMakeFiles/main.dir/codegen
 
 # clean rule for target.
@@ -1057,13 +1060,45 @@ CMakeFiles/main.dir/clean:
 .PHONY : CMakeFiles/main.dir/clean
 
 #=============================================================================
+# Target rules for target CMakeFiles/comms.dir
+
+# All Build rule for target.
+CMakeFiles/comms.dir/all:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/comms.dir/build.make CMakeFiles/comms.dir/depend
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/comms.dir/build.make CMakeFiles/comms.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/andrelorent/programming/data_common/build/CMakeFiles --progress-num=1,2 "Built target comms"
+.PHONY : CMakeFiles/comms.dir/all
+
+# Build rule for subdir invocation for target.
+CMakeFiles/comms.dir/rule: cmake_check_build_system
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/andrelorent/programming/data_common/build/CMakeFiles 2
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/comms.dir/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/andrelorent/programming/data_common/build/CMakeFiles 0
+.PHONY : CMakeFiles/comms.dir/rule
+
+# Convenience name for target.
+comms: CMakeFiles/comms.dir/rule
+.PHONY : comms
+
+# codegen rule for target.
+CMakeFiles/comms.dir/codegen:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/comms.dir/build.make CMakeFiles/comms.dir/codegen
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/andrelorent/programming/data_common/build/CMakeFiles --progress-num=1,2 "Finished codegen for target comms"
+.PHONY : CMakeFiles/comms.dir/codegen
+
+# clean rule for target.
+CMakeFiles/comms.dir/clean:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/comms.dir/build.make CMakeFiles/comms.dir/clean
+.PHONY : CMakeFiles/comms.dir/clean
+
+#=============================================================================
 # Target rules for target tests/CMakeFiles/parser_test.dir
 
 # All Build rule for target.
 tests/CMakeFiles/parser_test.dir/all:
 	$(MAKE) $(MAKESILENT) -f tests/CMakeFiles/parser_test.dir/build.make tests/CMakeFiles/parser_test.dir/depend
 	$(MAKE) $(MAKESILENT) -f tests/CMakeFiles/parser_test.dir/build.make tests/CMakeFiles/parser_test.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/andrelorent/programming/data_common/build/CMakeFiles --progress-num=3,4 "Built target parser_test"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/andrelorent/programming/data_common/build/CMakeFiles --progress-num=5,6 "Built target parser_test"
 .PHONY : tests/CMakeFiles/parser_test.dir/all
 
 # Build rule for subdir invocation for target.
@@ -1080,7 +1115,7 @@ parser_test: tests/CMakeFiles/parser_test.dir/rule
 # codegen rule for target.
 tests/CMakeFiles/parser_test.dir/codegen:
 	$(MAKE) $(MAKESILENT) -f tests/CMakeFiles/parser_test.dir/build.make tests/CMakeFiles/parser_test.dir/codegen
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/andrelorent/programming/data_common/build/CMakeFiles --progress-num=3,4 "Finished codegen for target parser_test"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/andrelorent/programming/data_common/build/CMakeFiles --progress-num=5,6 "Finished codegen for target parser_test"
 .PHONY : tests/CMakeFiles/parser_test.dir/codegen
 
 # clean rule for target.
