@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 3.22)
 project(data_stb_libs)
-SET(CMAKE_C_FLAGS "-Wall -Wextra -pedantic")
+# SET(CMAKE_C_FLAGS "-Wall -Wextra -pedantic")
+# add_compile_options(-Wpedantic)
+# add_compile_options(-Wall)
+# add_compile_options(-Wextra)
+
 # SET(CMAKE_C_FLAGS "-O3 -xSSE3 -restrict -lpthread -lX11 -ldrm")
 
 

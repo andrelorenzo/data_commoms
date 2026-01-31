@@ -1,3 +1,8 @@
+<<<<<<< HEAD
+C:/Users/ajlorenzo/Documents/AAS_projects/libraries/data_commoms/build/CMakeFiles/main.dir
+C:/Users/ajlorenzo/Documents/AAS_projects/libraries/data_commoms/build/CMakeFiles/ALL_BUILD.dir
+C:/Users/ajlorenzo/Documents/AAS_projects/libraries/data_commoms/build/CMakeFiles/ZERO_CHECK.dir
+=======
 /home/andrelorent/programming/data_common/build/CMakeFiles/Experimental.dir
 /home/andrelorent/programming/data_common/build/CMakeFiles/Nightly.dir
 /home/andrelorent/programming/data_common/build/CMakeFiles/Continuous.dir
@@ -35,3 +40,4 @@
 /home/andrelorent/programming/data_common/build/tests/CMakeFiles/test.dir
 /home/andrelorent/programming/data_common/build/tests/CMakeFiles/edit_cache.dir
 /home/andrelorent/programming/data_common/build/tests/CMakeFiles/rebuild_cache.dir
+>>>>>>> 46699f068ca1bdc4a04b04b5e3f99f80834da4f2
